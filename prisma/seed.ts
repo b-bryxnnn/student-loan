@@ -1,4 +1,4 @@
-import { PrismaClient, Role, BorrowerType } from '@prisma/client';
+import { PrismaClient, Role, BorrowerType } from '../src/generated/prisma';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();

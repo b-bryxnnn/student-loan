@@ -8,14 +8,22 @@ const globalForPrisma = globalThis as unknown as {
 
 let dbInstance: PrismaClient | any;
 
-if (!process.env.DATABASE_URL) {
-  // ช่วง Next.js build บน Coolify จะไม่มี DATABASE_URL
-  // จึงต้อง mock PrismaClient เพื่อไม่ให้ static prerendering พัง (PrismaClientKnownRequestError)
-  dbInstance = new Proxy({}, {
-    get: () => new Proxy({}, {
-      get: () => async () => [] // คืนค่า array ว่างๆ สำหรับท่า query อย่าง .findMany()
-    })
+if (process.env.CI === 'true' || !process.env.DATABASE_URL) {
+  // ช่วง Next.js build บน Coolify จะไม่มี DATABASE_URL หรืออยู่ในโหมด CI
+  // สร้าง Proxy ที่สมบูรณ์แบบเพื่อดัก Method ทั้งหมดของ Prisma
+  const deepMockProxy = new Proxy({}, {
+    get: (target, prop) => {
+      if (prop === 'then') return undefined; // ป้องกัน Promise chain พัง
+      return new Proxy(() => [], {
+        get: (innerTarget, innerProp) => {
+          if (innerProp === 'then') return undefined;
+          return () => [];
+        },
+        apply: () => [] // คืนค่า array ว่างเสมอเมื่อมีการเรียก function (เช่น .findMany())
+      });
+    }
   });
+  dbInstance = deepMockProxy;
 } else {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   const adapter = new PrismaPg(pool);

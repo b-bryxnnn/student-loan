@@ -1,0 +1,215 @@
+import { getSession } from '@/lib/auth';
+import { db } from '@/lib/db';
+import { redirect } from 'next/navigation';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { FileText, FileSignature, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
+import { format } from 'date-fns';
+import { th } from 'date-fns/locale';
+
+export default async function DashboardPage() {
+    const session = await getSession();
+    if (!session) redirect('/login');
+
+    const user = await db.user.findUnique({
+        where: { id: session.userId },
+        include: {
+            documents: true,
+            loanRequests: true
+        }
+    });
+
+    if (!user) redirect('/login');
+
+    const hasLoanRequest = user.loanRequests.length > 0;
+    const isNewBorrower = user.borrowerType === 'NEW';
+
+    return (
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight">ยินดีต้อนรับ, {user.prefix}{user.firstName} {user.lastName}</h1>
+                <p className="text-muted-foreground mt-2">
+                    นี่คือหน้าจัดการระบบกู้ยืมเงิน กยศ. ของคุณ ({isNewBorrower ? "ผู้กู้รายใหม่" : "ผู้กู้รายเก่า"})
+                </p>
+            </div>
+
+            {/* Requires Loan Request Form for New Borrowers */}
+            {isNewBorrower && !hasLoanRequest && (
+                <div className="bg-warning/10 border-l-4 border-warning p-6 rounded-lg shadow-sm">
+                    <div className="flex items-start gap-4">
+                        <AlertCircle className="w-6 h-6 text-warning shrink-0 mt-1" />
+                        <div>
+                            <h3 className="text-lg font-semibold text-warning-foreground">คุณยังไม่ได้กรอกแบบฟอร์มคำขอกู้ยืมเงินเบื้องต้น</h3>
+                            <p className="text-muted-foreground mt-1 mb-4">
+                                ในฐานะผู้กู้รายใหม่ คุณจำเป็นต้องกรอกประวัติการศึกษาและแนบไฟล์ ปพ.1 เพื่อขออนุมัติเบื้องต้นก่อนส่งแบบยืนยันและสัญญา
+                            </p>
+                            <Link href="/dashboard/loan-request">
+                                <Button className="shadow-lg hover-lift hover:scale-[1.02] transition-transform">
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    กรอกคำขอกู้ยืมเงิน
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Status Cards */}
+                <Card className="glass border-primary/10 hover-lift">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <FileCheckIcon className="w-5 h-5 text-primary" />
+                            สถานะเอกสารแบบยืนยัน
+                        </CardTitle>
+                        <CardDescription>การส่งแบบยืนยันเบิกเงินกู้ยืมภาคเรียนปัจจุบัน</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <DocumentStatusCard
+                            documents={user.documents}
+                            type="CONFIRMATION"
+                            disabled={isNewBorrower && !hasLoanRequest}
+                        />
+                    </CardContent>
+                </Card>
+
+                <Card className="glass border-secondary-foreground/10 hover-lift">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <FileSignature className="w-5 h-5 text-secondary-foreground" />
+                            สถานะเอกสารสัญญากู้ยืม
+                        </CardTitle>
+                        <CardDescription>เฉพาะผู้กู้รายใหม่ หรือเปลี่ยนระดับชั้น</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <DocumentStatusCard
+                            documents={user.documents}
+                            type="CONTRACT"
+                            disabled={!isNewBorrower || (isNewBorrower && !hasLoanRequest)}
+                        />
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    );
+}
+
+function FileCheckIcon(props: React.ComponentProps<'svg'>) {
+    return (
+        <svg
+            {...props}
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        >
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+            <polyline points="14 2 14 8 20 8" />
+            <path d="m9 15 2 2 4-4" />
+        </svg>
+    )
+}
+
+function DocumentStatusCard({ documents, type, disabled }: { documents: any[], type: string, disabled: boolean }) {
+    const activeDoc = documents.find(d => d.type === type);
+
+    if (disabled) {
+        return (
+            <div className="text-center py-6 text-muted-foreground bg-muted/30 rounded-lg">
+                <AlertCircle className="w-8 h-8 opacity-50 mx-auto mb-2" />
+                <p>ยังไม่สามารถดำเนินการได้ในขณะนี้</p>
+            </div>
+        );
+    }
+
+    if (!activeDoc) {
+        return (
+            <div className="flex flex-col items-center justify-center py-6 space-y-4 text-center">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                    <FileText className="w-6 h-6" />
+                </div>
+                <div>
+                    <p className="font-medium text-foreground">ยังไม่มีการส่งเอกสาร</p>
+                    <p className="text-sm text-muted-foreground mt-1">กรุณาส่งเอกสารให้เรียบร้อยเพื่อดำเนินการต่อ</p>
+                </div>
+                <Link href={`/dashboard/documents/new?type=${type}`}>
+                    <Button variant="outline" className="border-primary text-primary hover:bg-primary/5">
+                        ส่งเอกสาร{type === 'CONFIRMATION' ? 'แบบยืนยัน' : 'สัญญา'}
+                    </Button>
+                </Link>
+            </div>
+        );
+    }
+
+    const StatusBadge = () => {
+        switch (activeDoc.status) {
+            case 'PENDING':
+                return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"><Clock className="w-3.5 h-3.5" /> รอการตรวจสอบ</span>;
+            case 'APPROVED':
+                if (activeDoc.sentToCentral) {
+                    return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"><CheckCircle2 className="w-3.5 h-3.5" /> เอกสารถูกนำส่งส่วนกลางแล้ว</span>;
+                }
+                if (activeDoc.originalReceived) {
+                    return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300"><CheckCircle2 className="w-3.5 h-3.5" /> ได้รับเอกสารตัวจริงแล้ว</span>;
+                }
+                return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"><CheckCircle2 className="w-3.5 h-3.5" /> ผ่านการตรวจสอบ (รอตัวจริง)</span>;
+            case 'REJECTED':
+                return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"><AlertCircle className="w-3.5 h-3.5" /> เอกสารต้องแก้ไข</span>;
+            default:
+                return null;
+        }
+    };
+
+    return (
+        <div className="space-y-4">
+            <div className="flex items-center justify-between pb-4 border-b border-border/50">
+                <div>
+                    <p className="text-sm font-medium text-muted-foreground">ปีการศึกษา</p>
+                    <p className="font-semibold">{activeDoc.academicYear.replace('_', '/')}</p>
+                </div>
+                <StatusBadge />
+            </div>
+
+            <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">ส่งครั้งล่าสุด:</span>
+                    <span>{format(new Date(activeDoc.updatedAt), 'dd MMM yyyy HH:mm', { locale: th })}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">รหัสท้ายไฟล์:</span>
+                    <span className="font-mono bg-muted px-1.5 rounded">{activeDoc.lastThreeDigits}</span>
+                </div>
+            </div>
+
+            {activeDoc.status === 'REJECTED' && (
+                <div className="bg-destructive/10 p-3 rounded-md border border-destructive/20 mt-4 text-sm">
+                    <p className="font-semibold text-destructive mb-1 flex items-center gap-1">
+                        <AlertCircle className="w-4 h-4" /> หมายเหตุจากเจ้าหน้าที่:
+                    </p>
+                    <p className="text-foreground/80">{activeDoc.remark || "โปรดตรวจสอบอีเมล หรือแก้ไขเอกสารให้ถูกต้อง"}</p>
+
+                    {activeDoc.deadline && (
+                        <p className="text-xs text-destructive mt-2 font-medium">
+                            ครบกำหนดแก้ไข: {format(new Date(activeDoc.deadline), 'dd MMM yyyy', { locale: th })}
+                        </p>
+                    )}
+
+                    <div className="mt-3">
+                        <Link href={`/dashboard/documents/new?type=${activeDoc.type}`}>
+                            <Button size="sm" variant="destructive" className="w-full">
+                                แก้ไขเอกสารและส่งใหม่
+                            </Button>
+                        </Link>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+

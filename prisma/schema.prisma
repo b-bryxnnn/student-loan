@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String        @id @default(cuid())
+  prefix          String        // คำนำหน้า
+  firstName       String        // ชื่อ
+  lastName        String        // นามสกุล
+  studentId       String?       // รหัสนักเรียน (มี/ไม่มี)
+  idCard          String        @unique // เลขบัตรประจำตัวประชาชน
+  email           String        @unique // อีเมล
+  password        String        // รหัสผ่าน (Hashed)
+  borrowerType    BorrowerType  @default(NEW) // ประเภทยืนยัน(รายใหม่/รายเก่า)
+  role            Role          @default(STUDENT) // สิทธิ์
+  emailVerified   Boolean       @default(false)
+  otp             String?       // เก็บ OTP ชั่วคราว
+  otpExpiry       DateTime?     // เวลาหมดอายุ OTP
+  accountStatus   AccountStatus @default(ACTIVE) // สถานะบัญชี(Active/Archived)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  loanRequests    LoanRequest[]
+  documents       Document[]
+  auditLogs       AuditLog[]
+}
+
+model LoanRequest {
+  id              String   @id @default(cuid())
+  userId          String
+  purpose         String   // จุดประสงค์ขอกู้ยืมเบื้องต้น
+  gpa             Float    // เกรดเฉลี่ย
+  educationHistory String? // ประวัติการศึกษาที่ผ่านมา (ป.6 จากไหน, ม.3 จากไหน)
+  scholarships    String?  // ทุนที่เคยได้รับ
+  transcriptUrl   String?  // ไฟล์ ปพ.1 (เก็บเป็น URL หรือ ID จาก Drive)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Document {
+  id              String         @id @default(cuid())
+  userId          String
+  type            DocumentType   // ประเภท (แบบยืนยัน/สัญญา)
+  driveFileId     String         // ID ของไฟล์ใน Google Drive
+  lastThreeDigits String         // เลขท้าย 3 หลัก
+  status          DocumentStatus @default(PENDING) // สถานะปัจจุบัน
+  remark          String?        // ข้อความเหตุผลที่ตีกลับ
+  deadline        DateTime?      // วันที่ครบกำหนด(Deadline)
+  academicYear    String         // ปีการศึกษา_เทอม (เช่น 2567_1)
+  originalReceived Boolean       @default(false) // ได้รับเอกสารตัวจริงแล้วหรือยัง
+  sentToCentral   Boolean       @default(false) // นำส่งส่วนกลางแล้วหรือยัง
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, academicYear])
+  @@index([status])
+  @@index([academicYear, lastThreeDigits])
+}
+
+model SystemSetting {
+  id              String   @id @default(cuid())
+  academicYear    String   @default("2567")
+  semester        String   @default("1")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Announcement {
+  id              String   @id @default(cuid())
+  title           String
+  content         String
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model AuditLog {
+  id              String   @id @default(cuid())
+  adminId         String
+  action          String   // เช่น "APPROVED", "REJECTED", "ARCHIVED_ACCOUNTS"
+  details         String?  // รายละเอียดเพิ่มเติม 
+  entityType      String   // เช่น "DOCUMENT", "USER"
+  entityId        String   // ID ของสิ่งที่ถูกแก้
+  createdAt       DateTime @default(now())
+
+  admin           User     @relation(fields: [adminId], references: [id])
+
+  @@index([adminId])
+  @@index([entityType, entityId])
+}
+
+model FaqItem {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+model LoanInfoSection {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   // เนื้อหา (Markdown หรือ plain text)
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum BorrowerType {
+  NEW     // รายใหม่
+  OLD     // รายเก่า
+}
+
+enum AccountStatus {
+  ACTIVE
+  ARCHIVED // ย้ายไปเป็นสถานะ Inactive
+}
+
+enum DocumentType {
+  CONFIRMATION // แบบยืนยัน
+  CONTRACT     // สัญญา
+}
+
+enum DocumentStatus {
+  PENDING      // รอตรวจ
+  REJECTED     // ต้องแก้ไข
+  APPROVED     // ตรวจผ่าน (กำลังนำส่ง)
+}

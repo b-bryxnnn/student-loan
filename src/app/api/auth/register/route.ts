@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { sendOTPEmail } from '@/lib/email';
 import crypto from 'crypto';
 import { rateLimit, getClientIP } from '@/lib/rate-limit';
+import { validateThaiId } from '@/lib/validateThaiId';
 
 export async function POST(req: Request) {
     try {
@@ -18,8 +19,16 @@ export async function POST(req: Request) {
         const { prefix, firstName, lastName, studentId, idCard, email, password, borrowerType } = body;
 
         // === Backend Validation ===
-        if (!prefix || !firstName || !lastName || !idCard || !email || !password) {
-            return NextResponse.json({ error: "กรุณากรอกข้อมูลให้ครบถ้วน" }, { status: 400 });
+        if (!prefix || !firstName || !lastName || !idCard || !email || !password || !studentId) {
+            const missing = [];
+            if (!prefix) missing.push('คำนำหน้า');
+            if (!firstName) missing.push('ชื่อ');
+            if (!lastName) missing.push('นามสกุล');
+            if (!idCard) missing.push('เลขบัตรประชาชน');
+            if (!studentId) missing.push('รหัสนักเรียน');
+            if (!email) missing.push('อีเมล');
+            if (!password) missing.push('รหัสผ่าน');
+            return NextResponse.json({ error: `กรุณากรอกข้อมูลให้ครบถ้วน: ${missing.join(', ')}` }, { status: 400 });
         }
 
         if (typeof firstName !== 'string' || firstName.trim().length < 1 || firstName.length > 100) {
@@ -30,8 +39,12 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "นามสกุลไม่ถูกต้อง" }, { status: 400 });
         }
 
-        if (!/^\d{13}$/.test(idCard)) {
-            return NextResponse.json({ error: "เลขประจำตัวประชาชนไม่ถูกต้อง (ต้อง 13 หลักตัวเลข)" }, { status: 400 });
+        if (!validateThaiId(idCard)) {
+            return NextResponse.json({ error: "เลขประจำตัวประชาชนไม่ถูกต้อง (กรุณาตรวจสอบความถูกต้องของเลข 13 หลัก)" }, { status: 400 });
+        }
+
+        if (typeof studentId !== 'string' || studentId.trim().length < 1 || studentId.length > 20) {
+            return NextResponse.json({ error: "รหัสนักเรียนไม่ถูกต้อง" }, { status: 400 });
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -82,7 +95,7 @@ export async function POST(req: Request) {
                 prefix: prefix.trim(),
                 firstName: firstName.trim(),
                 lastName: lastName.trim(),
-                studentId: studentId || null,
+                studentId: studentId.trim(),
                 idCard,
                 email: email.trim().toLowerCase(),
                 password: hashedPassword,

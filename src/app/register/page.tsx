@@ -23,11 +23,12 @@ export default function RegisterPage() {
         firstName: "",
         lastName: "",
         studentId: "",
+        gradeLevel: "",
         idCard: "",
         email: "",
         password: "",
         confirmPassword: "",
-        borrowerType: "NEW" // NEW or OLD
+        borrowerType: "NEW"
     });
 
     // Field-level errors
@@ -39,7 +40,6 @@ export default function RegisterPage() {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-        // Clear error on change
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: "" }));
         }
@@ -52,7 +52,7 @@ export default function RegisterPage() {
         }
     };
 
-    // Client-side ID card handler — only numbers, validate on blur
+    // ID card — only numbers, validate on blur
     const handleIdCardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value.replace(/[^0-9]/g, '');
         setFormData(prev => ({ ...prev, idCard: value }));
@@ -79,6 +79,7 @@ export default function RegisterPage() {
         if (!formData.firstName.trim()) newErrors.firstName = "กรุณากรอกชื่อ";
         if (!formData.lastName.trim()) newErrors.lastName = "กรุณากรอกนามสกุล";
         if (!formData.studentId.trim()) newErrors.studentId = "กรุณากรอกรหัสนักเรียน";
+        if (!formData.gradeLevel) newErrors.gradeLevel = "กรุณาเลือกระดับชั้น";
 
         if (!formData.idCard) {
             newErrors.idCard = "กรุณากรอกเลขประจำตัวประชาชน";
@@ -165,133 +166,148 @@ export default function RegisterPage() {
         if (!errors[field]) return null;
         return (
             <p className="text-xs text-destructive flex items-center gap-1 mt-1">
-                <AlertCircle className="w-3 h-3" />
+                <AlertCircle className="w-3 h-3 shrink-0" />
                 {errors[field]}
             </p>
         );
     };
 
     return (
-        <div className="min-h-[calc(100vh-4rem)] py-8 sm:py-12 px-4 flex justify-center">
-            <div className="absolute top-1/2 left-3/4 w-[600px] h-[600px] bg-secondary/20 rounded-full blur-[120px] opacity-30 -z-10 -translate-y-1/2" />
-
-            <Card className="w-full max-w-2xl glass border-border/50 shadow-2xl h-fit animate-in fade-in slide-in-from-bottom-6 duration-700">
+        <div className="min-h-[calc(100vh-4rem)] py-6 sm:py-10 px-4 flex justify-center">
+            <Card className="w-full max-w-2xl border-primary/10 shadow-lg h-fit animate-in fade-in slide-in-from-bottom-6 duration-700">
                 {step === 1 ? (
                     <form onSubmit={handleRegister}>
-                        <CardHeader className="text-center space-y-3 pb-6 border-b border-border/50">
-                            <div className="mx-auto bg-primary/10 p-3 rounded-full w-14 h-14 flex items-center justify-center text-primary">
-                                <UserPlus className="w-7 h-7" />
+                        <CardHeader className="text-center space-y-2 pb-5 border-b border-border/50">
+                            <div className="mx-auto bg-primary/10 p-3 rounded-full w-12 h-12 flex items-center justify-center text-primary">
+                                <UserPlus className="w-6 h-6" />
                             </div>
-                            <CardTitle className="text-2xl sm:text-3xl font-extrabold tracking-tight">ลงทะเบียนผู้ใช้ใหม่</CardTitle>
-                            <CardDescription>
-                                กรอกข้อมูลให้ครบถ้วนและถูกต้องตามความเป็นจริง
+                            <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight">ลงทะเบียนผู้ใช้ใหม่</CardTitle>
+                            <CardDescription className="text-xs sm:text-sm">
+                                กรอกข้อมูลให้ครบถ้วนและถูกต้อง
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-5 pt-6">
+                        <CardContent className="space-y-4 pt-5">
 
                             {/* Row: Prefix + First + Last */}
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <div className="space-y-2">
-                                    <Label>คำนำหน้า <span className="text-destructive">*</span></Label>
+                            <div className="grid grid-cols-3 gap-3">
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs">คำนำหน้า <span className="text-destructive">*</span></Label>
                                     <Select onValueChange={(v) => handleSelectChange('prefix', v)}>
-                                        <SelectTrigger className={`bg-background/50 ${errors.prefix ? 'border-destructive' : ''}`}>
-                                            <SelectValue placeholder="เลือก..." />
+                                        <SelectTrigger className={`bg-white text-sm ${errors.prefix ? 'border-destructive' : ''}`}>
+                                            <SelectValue placeholder="เลือก" />
                                         </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="ด.ช.">เด็กชาย (ด.ช.)</SelectItem>
-                                            <SelectItem value="ด.ญ.">เด็กหญิง (ด.ญ.)</SelectItem>
+                                        <SelectContent position="popper" sideOffset={4}>
+                                            <SelectItem value="ด.ช.">ด.ช.</SelectItem>
+                                            <SelectItem value="ด.ญ.">ด.ญ.</SelectItem>
                                             <SelectItem value="นาย">นาย</SelectItem>
                                             <SelectItem value="นางสาว">นางสาว</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <FieldError field="prefix" />
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="firstName">ชื่อ <span className="text-destructive">*</span></Label>
-                                    <Input id="firstName" name="firstName" value={formData.firstName} onChange={handleChange} className={`bg-background/50 ${errors.firstName ? 'border-destructive' : ''}`} placeholder="ชื่อ" />
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="firstName" className="text-xs">ชื่อ <span className="text-destructive">*</span></Label>
+                                    <Input id="firstName" name="firstName" value={formData.firstName} onChange={handleChange} className={`bg-white text-sm ${errors.firstName ? 'border-destructive' : ''}`} placeholder="ชื่อ" />
                                     <FieldError field="firstName" />
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="lastName">นามสกุล <span className="text-destructive">*</span></Label>
-                                    <Input id="lastName" name="lastName" value={formData.lastName} onChange={handleChange} className={`bg-background/50 ${errors.lastName ? 'border-destructive' : ''}`} placeholder="นามสกุล" />
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="lastName" className="text-xs">นามสกุล <span className="text-destructive">*</span></Label>
+                                    <Input id="lastName" name="lastName" value={formData.lastName} onChange={handleChange} className={`bg-white text-sm ${errors.lastName ? 'border-destructive' : ''}`} placeholder="นามสกุล" />
                                     <FieldError field="lastName" />
                                 </div>
                             </div>
 
-                            {/* Row: ID Card + Student ID */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="idCard">เลขประจำตัวประชาชน <span className="text-destructive">*</span></Label>
-                                    <Input
-                                        id="idCard" name="idCard" value={formData.idCard}
-                                        onChange={handleIdCardChange}
-                                        onBlur={handleIdCardBlur}
-                                        maxLength={13}
-                                        className={`bg-background/50 font-mono tracking-wider ${errors.idCard ? 'border-destructive' : ''}`}
-                                        placeholder="ตัวเลข 13 หลัก"
-                                    />
-                                    {errors.idCard ? (
-                                        <FieldError field="idCard" />
-                                    ) : formData.idCard.length === 13 && validateThaiId(formData.idCard) ? (
-                                        <p className="text-xs text-success flex items-center gap-1 mt-1">
-                                            <CheckCircle2 className="w-3 h-3" />
-                                            เลขบัตรถูกต้อง
-                                        </p>
-                                    ) : (
-                                        <p className="text-xs text-muted-foreground">ระบบจะตรวจสอบความถูกต้องอัตโนมัติ</p>
-                                    )}
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="studentId">เลขประจำตัวนักเรียน <span className="text-destructive">*</span></Label>
-                                    <Input id="studentId" name="studentId" value={formData.studentId} onChange={handleChange} className={`bg-background/50 ${errors.studentId ? 'border-destructive' : ''}`} placeholder="เช่น 12345" />
+                            {/* Row: Student ID + Grade Level */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="studentId" className="text-xs">เลขประจำตัวนักเรียน <span className="text-destructive">*</span></Label>
+                                    <Input id="studentId" name="studentId" value={formData.studentId} onChange={handleChange} className={`bg-white text-sm ${errors.studentId ? 'border-destructive' : ''}`} placeholder="เช่น 12345" />
                                     <FieldError field="studentId" />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs">ระดับชั้น <span className="text-destructive">*</span></Label>
+                                    <Select onValueChange={(v) => handleSelectChange('gradeLevel', v)}>
+                                        <SelectTrigger className={`bg-white text-sm ${errors.gradeLevel ? 'border-destructive' : ''}`}>
+                                            <SelectValue placeholder="เลือกระดับชั้น" />
+                                        </SelectTrigger>
+                                        <SelectContent position="popper" sideOffset={4}>
+                                            <SelectItem value="ม.4">มัธยมศึกษาปีที่ 4 (ม.4)</SelectItem>
+                                            <SelectItem value="ม.5">มัธยมศึกษาปีที่ 5 (ม.5)</SelectItem>
+                                            <SelectItem value="ม.6">มัธยมศึกษาปีที่ 6 (ม.6)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FieldError field="gradeLevel" />
                                 </div>
                             </div>
 
+                            {/* ID Card */}
+                            <div className="space-y-1.5">
+                                <Label htmlFor="idCard" className="text-xs">เลขประจำตัวประชาชน <span className="text-destructive">*</span></Label>
+                                <Input
+                                    id="idCard" name="idCard" value={formData.idCard}
+                                    onChange={handleIdCardChange}
+                                    onBlur={handleIdCardBlur}
+                                    maxLength={13}
+                                    inputMode="numeric"
+                                    className={`bg-white font-mono tracking-wider text-sm ${errors.idCard ? 'border-destructive' : ''}`}
+                                    placeholder="ตัวเลข 13 หลัก"
+                                />
+                                {errors.idCard ? (
+                                    <FieldError field="idCard" />
+                                ) : formData.idCard.length === 13 && validateThaiId(formData.idCard) ? (
+                                    <p className="text-xs text-success flex items-center gap-1 mt-1">
+                                        <CheckCircle2 className="w-3 h-3" />
+                                        เลขบัตรถูกต้อง
+                                    </p>
+                                ) : (
+                                    <p className="text-[10px] text-muted-foreground">ระบบจะตรวจสอบความถูกต้องอัตโนมัติ</p>
+                                )}
+                            </div>
+
                             {/* Email */}
-                            <div className="space-y-2">
-                                <Label htmlFor="email">ที่อยู่อีเมล (สำหรับรับ OTP) <span className="text-destructive">*</span></Label>
-                                <Input type="email" id="email" name="email" value={formData.email} onChange={handleChange} className={`bg-background/50 ${errors.email ? 'border-destructive' : ''}`} placeholder="example@gmail.com" />
+                            <div className="space-y-1.5">
+                                <Label htmlFor="email" className="text-xs">อีเมล (สำหรับรับ OTP) <span className="text-destructive">*</span></Label>
+                                <Input type="email" id="email" name="email" value={formData.email} onChange={handleChange} className={`bg-white text-sm ${errors.email ? 'border-destructive' : ''}`} placeholder="example@gmail.com" />
                                 <FieldError field="email" />
                             </div>
 
                             {/* Password */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="password">รหัสผ่าน <span className="text-destructive">*</span></Label>
-                                    <Input type="password" id="password" name="password" value={formData.password} onChange={handleChange} className={`bg-background/50 ${errors.password ? 'border-destructive' : ''}`} />
-                                    {errors.password ? <FieldError field="password" /> : <p className="text-xs text-muted-foreground">ต้องมีอย่างน้อย 8 ตัวอักษร</p>}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="password" className="text-xs">รหัสผ่าน <span className="text-destructive">*</span></Label>
+                                    <Input type="password" id="password" name="password" value={formData.password} onChange={handleChange} className={`bg-white text-sm ${errors.password ? 'border-destructive' : ''}`} />
+                                    {errors.password ? <FieldError field="password" /> : <p className="text-[10px] text-muted-foreground">อย่างน้อย 8 ตัวอักษร</p>}
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="confirmPassword">ยืนยันรหัสผ่าน <span className="text-destructive">*</span></Label>
-                                    <Input type="password" id="confirmPassword" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} className={`bg-background/50 ${errors.confirmPassword ? 'border-destructive' : ''}`} />
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="confirmPassword" className="text-xs">ยืนยันรหัสผ่าน <span className="text-destructive">*</span></Label>
+                                    <Input type="password" id="confirmPassword" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} className={`bg-white text-sm ${errors.confirmPassword ? 'border-destructive' : ''}`} />
                                     <FieldError field="confirmPassword" />
                                 </div>
                             </div>
 
                             {/* Borrower Type */}
-                            <div className="bg-muted/30 p-4 rounded-lg border border-border/50">
-                                <Label className="text-base mb-2 block">สถานะผู้กู้ยืม</Label>
+                            <div className="bg-muted/30 p-3 sm:p-4 rounded-lg border border-border/50">
+                                <Label className="text-xs sm:text-sm mb-2 block font-semibold">สถานะผู้กู้ยืม</Label>
                                 <Select onValueChange={(v) => handleSelectChange('borrowerType', v)} defaultValue="NEW">
-                                    <SelectTrigger className="bg-background/50">
+                                    <SelectTrigger className="bg-white text-sm">
                                         <SelectValue placeholder="เลือกประเภท..." />
                                     </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="NEW">ผู้กู้รายใหม่ (แบบยืนยัน และ สัญญา)</SelectItem>
-                                        <SelectItem value="OLD">ผู้กู้รายเก่าเลื่อนชั้นปี/ย้ายสถานศึกษา (แบบยืนยัน)</SelectItem>
+                                    <SelectContent position="popper" sideOffset={4}>
+                                        <SelectItem value="NEW">ผู้กู้รายใหม่ (ยังไม่เคยกู้ กยศ. มาก่อน)</SelectItem>
+                                        <SelectItem value="OLD">ผู้กู้รายเก่า (เคยกู้ กยศ. มาก่อนหน้านี้แล้ว)</SelectItem>
                                     </SelectContent>
                                 </Select>
-                                <p className="text-xs text-muted-foreground mt-2">
-                                    ** หากเลือกรายใหม่ จะต้องกรอกฟอร์มขอกู้ยืมออนไลน์ (ระบุจุดประสงค์, เกรด, ทุน) อีกครั้งในขั้นตอนต่อไป
+                                <p className="text-[10px] text-muted-foreground mt-2">
+                                    ผู้กู้รายใหม่จะต้องกรอกฟอร์มขอกู้ยืมออนไลน์เพิ่มเติมในขั้นตอนต่อไป
                                 </p>
                             </div>
 
                         </CardContent>
-                        <CardFooter className="flex flex-col space-y-4 border-t border-border/50 pt-6">
-                            <Button type="submit" size="lg" className="w-full text-base font-semibold shadow-lg shadow-primary/20" disabled={loading}>
+                        <CardFooter className="flex flex-col space-y-3 border-t border-border/50 pt-5">
+                            <Button type="submit" size="lg" className="w-full text-sm font-semibold shadow-md shadow-primary/20" disabled={loading}>
                                 {loading ? "กำลังส่งข้อมูล..." : "สมัครสมาชิกและรับรหัส OTP"}
                             </Button>
-                            <div className="text-center text-sm text-muted-foreground w-full">
+                            <div className="text-center text-xs text-muted-foreground w-full">
                                 มีบัญชีอยู่แล้ว?{" "}
                                 <Link href="/login" className="text-primary hover:underline font-semibold">
                                     เข้าสู่ระบบ
@@ -301,41 +317,42 @@ export default function RegisterPage() {
                     </form>
                 ) : (
                     <form onSubmit={handleVerifyOTP}>
-                        <CardHeader className="text-center space-y-3 pb-6 border-b border-border/50">
-                            <div className="mx-auto bg-success/10 p-3 rounded-full w-14 h-14 flex items-center justify-center text-success">
-                                <ShieldCheck className="w-7 h-7" />
+                        <CardHeader className="text-center space-y-2 pb-5 border-b border-border/50">
+                            <div className="mx-auto bg-success/10 p-3 rounded-full w-12 h-12 flex items-center justify-center text-success">
+                                <ShieldCheck className="w-6 h-6" />
                             </div>
-                            <CardTitle className="text-2xl sm:text-3xl font-extrabold tracking-tight">ยืนยันรหัส OTP</CardTitle>
-                            <CardDescription>
-                                ระบบได้ส่งรหัส 6 หลักไปยังอีเมล <strong>{formData.email}</strong> แล้ว
+                            <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight">ยืนยันรหัส OTP</CardTitle>
+                            <CardDescription className="text-xs sm:text-sm">
+                                ระบบได้ส่งรหัส 6 หลักไปยัง <strong>{formData.email}</strong> แล้ว
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-6 pt-6 flex flex-col items-center">
-                            <div className="space-y-2 w-full max-w-xs text-center">
-                                <Label htmlFor="otpCode">รหัสผ่านชั่วคราว (OTP)</Label>
+                        <CardContent className="space-y-4 pt-5 flex flex-col items-center">
+                            <div className="space-y-1.5 w-full max-w-xs text-center">
+                                <Label htmlFor="otpCode" className="text-xs">รหัส OTP</Label>
                                 <Input
                                     id="otpCode"
                                     value={otpCode}
                                     onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
                                     maxLength={6}
+                                    inputMode="numeric"
                                     required
-                                    className="bg-background/50 text-center text-3xl tracking-widest h-16 font-mono"
+                                    className="bg-white text-center text-2xl tracking-widest h-14 font-mono"
                                 />
                             </div>
                         </CardContent>
-                        <CardFooter className="flex flex-col space-y-4 pt-6">
-                            <Button type="submit" size="lg" className="w-full text-base font-semibold shadow-lg shadow-primary/20" disabled={loading}>
+                        <CardFooter className="flex flex-col space-y-3 pt-5">
+                            <Button type="submit" size="lg" className="w-full text-sm font-semibold shadow-md shadow-primary/20" disabled={loading}>
                                 {loading ? "กำลังยืนยัน..." : "ยืนยันและเข้าใช้งาน"}
                             </Button>
-                            <div className="text-center space-y-2">
-                                <p className="text-xs text-muted-foreground">
-                                    ไม่ได้รับอีเมล? ลองตรวจสอบโฟลเดอร์ <strong>"สแปม (Spam/Junk)"</strong> ด้วย
+                            <div className="text-center space-y-1.5">
+                                <p className="text-[10px] text-muted-foreground">
+                                    ไม่ได้รับอีเมล? ตรวจสอบโฟลเดอร์ &quot;สแปม (Spam/Junk)&quot; ด้วย
                                 </p>
                                 <button
                                     type="button"
                                     onClick={() => handleRegister()}
                                     disabled={loading}
-                                    className="text-sm text-primary hover:underline disabled:opacity-50"
+                                    className="text-xs text-primary hover:underline disabled:opacity-50"
                                 >
                                     ขอ OTP ใหม่อีกครั้ง
                                 </button>

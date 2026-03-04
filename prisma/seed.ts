@@ -24,6 +24,7 @@ async function main() {
             firstName: 'Admin',
             lastName: 'System',
             idCard: adminIdCard,
+            studentId: 'ADMIN',
             email: 'admin@rsl.ac.th', // ใส่อีเมลหลอกๆ เพื่อให้ระบบผ่านการตรวจสอบ Required
             password: hashedPassword,
             role: Role.ADMIN,

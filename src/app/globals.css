@@ -2,8 +2,6 @@
 
 @plugin "tailwindcss-animate";
 
-@custom-variant dark (&:is(.dark *));
-
 @theme {
   --font-sans: var(--font-prompt), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
@@ -12,11 +10,11 @@
   --background: oklch(0.985 0.005 270);
   --foreground: oklch(0.141 0.005 285.823);
 
-  /* Primary: Indigo / Blue-ish vibe for trust and tech */
-  --primary: oklch(0.48 0.17 265);
+  /* Primary: Deep Blue — ทางการ, น่าเชื่อถือ */
+  --primary: oklch(0.42 0.16 260);
   --primary-foreground: oklch(0.985 0.005 270);
 
-  /* Secondary: Soft Grayish Blue */
+  /* Secondary: Soft Gray-Blue */
   --secondary: oklch(0.95 0.02 265);
   --secondary-foreground: oklch(0.2 0.02 265);
 
@@ -32,59 +30,23 @@
   --accent: oklch(0.967 0.001 286.375);
   --accent-foreground: oklch(0.21 0.006 285.885);
 
-  /* Destructive: Soft Crimson Red */
+  /* Destructive: Crimson Red */
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0.005 270);
 
-  /* Success: Soft Emerald Green */
+  /* Success: Emerald Green */
   --success: oklch(0.65 0.15 150);
   --success-foreground: oklch(0.985 0.005 270);
 
-  /* Warning: Soft Amber */
+  /* Warning: Amber */
   --warning: oklch(0.75 0.18 75);
   --warning-foreground: oklch(0.15 0.05 75);
 
   --border: oklch(0.92 0.004 286.32);
   --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.48 0.17 265);
+  --ring: oklch(0.42 0.16 260);
 
   --radius: 0.75rem;
-}
-
-.dark {
-  --background: oklch(0.1 0.005 285.823);
-  --foreground: oklch(0.985 0.005 270);
-
-  --primary: oklch(0.55 0.18 265);
-  --primary-foreground: oklch(0.985 0.005 270);
-
-  --secondary: oklch(0.2 0.02 265);
-  --secondary-foreground: oklch(0.95 0.02 265);
-
-  --card: oklch(0.12 0.005 285.823);
-  --card-foreground: oklch(0.985 0.005 270);
-
-  --popover: oklch(0.12 0.005 285.823);
-  --popover-foreground: oklch(0.985 0.005 270);
-
-  --muted: oklch(0.2 0.005 285.823);
-  --muted-foreground: oklch(0.7 0.01 258);
-
-  --accent: oklch(0.2 0.005 285.823);
-  --accent-foreground: oklch(0.985 0.005 270);
-
-  --destructive: oklch(0.4 0.18 27);
-  --destructive-foreground: oklch(0.985 0.005 270);
-
-  --success: oklch(0.5 0.15 150);
-  --success-foreground: oklch(0.985 0.005 270);
-
-  --warning: oklch(0.6 0.18 75);
-  --warning-foreground: oklch(0.15 0.05 75);
-
-  --border: oklch(0.2 0.005 285.823);
-  --input: oklch(0.2 0.005 285.823);
-  --ring: oklch(0.55 0.18 265);
 }
 
 @theme inline {
@@ -117,17 +79,12 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* Glassmorphism utilities */
+/* Glassmorphism utilities — light theme only */
 .glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.dark .glass {
-  background: rgba(15, 15, 20, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
 /* Micro-animations */
@@ -137,7 +94,7 @@
 
 .hover-lift:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.06);
 }
 
 html {
@@ -148,19 +105,12 @@ body {
   font-family: var(--font-sans);
   background-color: var(--background);
   color: var(--foreground);
-  /* Subdued modern gradient background */
+  /* Subtle blue gradient for official feel */
   background-image:
-    radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 0.02) 0, transparent 50%),
-    radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 0.02) 0, transparent 50%),
-    radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 0.02) 0, transparent 50%);
+    radial-gradient(at 0% 0%, hsla(220, 60%, 50%, 0.03) 0, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(220, 50%, 40%, 0.03) 0, transparent 50%),
+    radial-gradient(at 50% 100%, hsla(220, 40%, 60%, 0.02) 0, transparent 50%);
   background-attachment: fixed;
-}
-
-.dark body {
-  background-image:
-    radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 0.3) 0, transparent 50%),
-    radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 0.3) 0, transparent 50%),
-    radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 0.3) 0, transparent 50%);
 }
 
 @layer base {

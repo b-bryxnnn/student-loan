@@ -10,7 +10,7 @@ export default function Navbar({ userRole }: { userRole?: string }) {
     const [mobileOpen, setMobileOpen] = useState(false);
 
     return (
-        <nav className="sticky top-0 z-50 w-full border-b border-white/10 glass">
+        <nav className="sticky top-0 z-50 w-full border-b border-border/50 bg-white/80 backdrop-blur-lg">
             <div className="container mx-auto px-4 h-14 sm:h-16 flex items-center justify-between">
                 {/* Logo + Title */}
                 <div className="flex items-center gap-2">
@@ -81,7 +81,7 @@ export default function Navbar({ userRole }: { userRole?: string }) {
 
             {/* Mobile Menu Dropdown */}
             {mobileOpen && (
-                <div className="sm:hidden border-t border-border/50 glass animate-in slide-in-from-top-2 duration-200">
+                <div className="sm:hidden border-t border-border/50 bg-white animate-in slide-in-from-top-2 duration-200">
                     <div className="container mx-auto px-4 py-3 space-y-1">
                         <Link href="/loan-info" onClick={() => setMobileOpen(false)}>
                             <div className="flex items-center gap-2 px-3 py-2.5 rounded-md hover:bg-muted/50 transition-colors text-sm">

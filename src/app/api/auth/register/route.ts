@@ -126,6 +126,7 @@ export async function POST(req: Request) {
 
     } catch (error) {
         console.error("REGISTER ERROR:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return NextResponse.json({ error: `เกิดข้อผิดพลาดภายในระบบ: ${message}` }, { status: 500 });
     }
 }

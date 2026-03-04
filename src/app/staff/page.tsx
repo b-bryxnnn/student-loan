@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
-export default function AdminLoginPage() {
+export default function StaffLoginPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [username, setUsername] = useState("");
@@ -36,10 +35,10 @@ export default function AdminLoginPage() {
 
             if (res.ok) {
                 if (data.role === 'ADMIN') {
-                    toast.success("เข้าสู่ระบบแอดมินสำเร็จ!");
+                    toast.success("เข้าสู่ระบบเจ้าหน้าที่สำเร็จ!");
                     router.push("/admin");
                 } else {
-                    toast.error("บัญชีนี้ไม่มีสิทธิ์เข้าถึงหน้าแอดมิน");
+                    toast.error("บัญชีนี้ไม่มีสิทธิ์เข้าถึงหน้าเจ้าหน้าที่");
                 }
             } else {
                 toast.error(data.error || "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
@@ -52,11 +51,11 @@ export default function AdminLoginPage() {
     };
 
     return (
-        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100">
-            <Card className="w-full max-w-sm border-primary/10 shadow-lg">
+        <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4">
+            <Card className="w-full max-w-sm border-primary/10 shadow-lg gradient-border animate-in fade-in slide-in-from-bottom-6 duration-700">
                 <form onSubmit={handleLogin}>
                     <CardHeader className="space-y-2 text-center pb-5 border-b border-border/50">
-                        <div className="mx-auto bg-primary/10 p-3 rounded-full w-12 h-12 flex items-center justify-center text-primary mb-1">
+                        <div className="mx-auto bg-primary/10 p-3 rounded-full w-12 h-12 flex items-center justify-center text-primary ring-2 ring-warning/20 mb-1">
                             <ShieldCheck className="w-6 h-6" />
                         </div>
                         <CardTitle className="text-lg font-bold tracking-tight">เข้าสู่ระบบเจ้าหน้าที่</CardTitle>

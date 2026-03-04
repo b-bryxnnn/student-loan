@@ -28,10 +28,10 @@ export default async function Home() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-background to-background/50 relative overflow-hidden flex flex-col">
-      {/* Decorative Shapes — subtle for official look */}
-      <div className="absolute top-0 right-0 -translate-y-1/4 translate-x-1/4 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 translate-y-1/4 -translate-x-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
+    <div className="min-h-[calc(100vh-4rem)] relative overflow-hidden flex flex-col">
+      {/* Decorative Shapes */}
+      <div className="absolute top-0 right-0 -translate-y-1/4 translate-x-1/4 w-[600px] h-[600px] bg-primary/4 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 translate-y-1/4 -translate-x-1/4 w-[500px] h-[500px] bg-warning/5 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="container mx-auto px-4 py-8 sm:py-12 md:py-16 relative z-10">
 
@@ -39,23 +39,23 @@ export default async function Home() {
         <div className="max-w-4xl mx-auto text-center space-y-5 sm:space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-1000">
 
           {/* Logos */}
-          <div className="flex items-center justify-center gap-4 sm:gap-6 md:gap-8 mb-2">
-            <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 flex-shrink-0">
+          <div className="flex items-center justify-center gap-4 sm:gap-6 md:gap-8 mb-4">
+            <div className="relative w-18 h-18 sm:w-22 sm:h-22 md:w-28 md:h-28 flex-shrink-0 rounded-full bg-white shadow-lg p-2 ring-2 ring-warning/30">
               <Image
                 src="https://upload.wikimedia.org/wikipedia/commons/c/c8/Student_Loan_logo.svg"
                 alt="โลโก้กองทุนเงินให้กู้ยืมเพื่อการศึกษา (กยศ.)"
                 fill
-                className="object-contain drop-shadow-md"
+                className="object-contain p-2"
                 unoptimized
               />
             </div>
-            <div className="h-12 sm:h-16 w-px bg-gradient-to-b from-transparent via-primary/30 to-transparent" />
-            <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 flex-shrink-0">
+            <div className="h-14 sm:h-18 w-px bg-gradient-to-b from-transparent via-warning/40 to-transparent" />
+            <div className="relative w-18 h-18 sm:w-22 sm:h-22 md:w-28 md:h-28 flex-shrink-0 rounded-full bg-white shadow-lg p-2 ring-2 ring-warning/30">
               <Image
                 src="https://upload.wikimedia.org/wikipedia/commons/9/9f/RSL001.png"
                 alt="ตราโรงเรียนรัตนโกสินทร์สมโภชลาดกระบัง"
                 fill
-                className="object-contain drop-shadow-md"
+                className="object-contain p-2"
                 unoptimized
               />
             </div>
@@ -71,19 +71,22 @@ export default async function Home() {
             ลักษณะที่ 1 — ให้กู้ยืมเพื่อการศึกษาสำหรับนักเรียนที่ขาดแคลนทุนทรัพย์ (รายได้ครอบครัวไม่เกิน 360,000 บาท/ปี)
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4 px-4 sm:px-0">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-6 px-4 sm:px-0">
             <Link href="/register">
-              <Button size="lg" className="w-full sm:w-auto text-sm sm:text-base hover-lift shadow-lg shadow-primary/20 group">
+              <Button size="lg" className="w-full sm:w-auto text-sm sm:text-base hover-lift shadow-lg group">
                 ลงทะเบียนผู้ใช้ใหม่
                 <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
             <Link href="/login">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto text-sm sm:text-base hover-lift border-primary/30">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto text-sm sm:text-base hover-lift border-primary/40 bg-white">
                 เข้าสู่ระบบ
               </Button>
             </Link>
           </div>
+
+          {/* Gold divider */}
+          <div className="gold-divider max-w-xs mx-auto mt-6" />
         </div>
 
         {/* =================== ประกาศ =================== */}

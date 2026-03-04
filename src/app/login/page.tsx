@@ -61,11 +61,11 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4">
-            <Card className="w-full max-w-md border-primary/10 shadow-lg">
+            <Card className="w-full max-w-md border-primary/10 shadow-lg gradient-border">
                 <form onSubmit={handleLogin}>
                     <CardHeader className="space-y-2 text-center pb-5 border-b border-border/50">
-                        <div className="flex items-center justify-center gap-3 mb-2">
-                            <div className="relative w-10 h-10">
+                        <div className="flex items-center justify-center gap-3 mb-3">
+                            <div className="relative w-12 h-12 rounded-full bg-white shadow-md p-1 ring-2 ring-warning/20">
                                 <Image
                                     src="https://upload.wikimedia.org/wikipedia/commons/c/c8/Student_Loan_logo.svg"
                                     alt="กยศ."

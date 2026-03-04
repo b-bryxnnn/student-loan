@@ -39,8 +39,14 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "นามสกุลไม่ถูกต้อง" }, { status: 400 });
         }
 
+        // ตรวจสอบรูปแบบเลขบัตร (13 หลัก ตัวเลขเท่านั้น)
+        if (!/^\d{13}$/.test(idCard)) {
+            return NextResponse.json({ error: "เลขประจำตัวประชาชนต้องเป็นตัวเลข 13 หลัก" }, { status: 400 });
+        }
+
+        // ตรวจ checksum — เตือนใน log แต่ไม่ block
         if (!validateThaiId(idCard)) {
-            return NextResponse.json({ error: "เลขประจำตัวประชาชนไม่ถูกต้อง (กรุณาตรวจสอบความถูกต้องของเลข 13 หลัก)" }, { status: 400 });
+            console.warn("WARNING: Thai ID checksum failed for:", idCard, "— allowing registration anyway");
         }
 
         if (studentId && (typeof studentId !== 'string' || studentId.trim().length < 1 || studentId.length > 20)) {

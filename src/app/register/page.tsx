@@ -62,11 +62,7 @@ export default function RegisterPage() {
     };
 
     const handleIdCardBlur = () => {
-        if (formData.idCard.length === 13) {
-            if (!validateThaiId(formData.idCard)) {
-                setErrors(prev => ({ ...prev, idCard: "เลขบัตรประชาชนไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง" }));
-            }
-        } else if (formData.idCard.length > 0) {
+        if (formData.idCard.length > 0 && formData.idCard.length !== 13) {
             setErrors(prev => ({ ...prev, idCard: "เลขบัตรประชาชนต้องมี 13 หลัก" }));
         }
     };
@@ -83,8 +79,8 @@ export default function RegisterPage() {
 
         if (!formData.idCard) {
             newErrors.idCard = "กรุณากรอกเลขประจำตัวประชาชน";
-        } else if (!validateThaiId(formData.idCard)) {
-            newErrors.idCard = "เลขบัตรประชาชนไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง";
+        } else if (formData.idCard.length !== 13) {
+            newErrors.idCard = "เลขบัตรประชาชนต้องมี 13 หลัก";
         }
 
         if (!formData.email) {
@@ -174,11 +170,11 @@ export default function RegisterPage() {
 
     return (
         <div className="min-h-[calc(100vh-4rem)] py-6 sm:py-10 px-4 flex justify-center">
-            <Card className="w-full max-w-2xl border-primary/10 shadow-lg h-fit animate-in fade-in slide-in-from-bottom-6 duration-700">
+            <Card className="w-full max-w-2xl border-primary/10 shadow-lg h-fit gradient-border animate-in fade-in slide-in-from-bottom-6 duration-700">
                 {step === 1 ? (
                     <form onSubmit={handleRegister}>
                         <CardHeader className="text-center space-y-2 pb-5 border-b border-border/50">
-                            <div className="mx-auto bg-primary/10 p-3 rounded-full w-12 h-12 flex items-center justify-center text-primary">
+                            <div className="mx-auto bg-primary/10 p-3 rounded-full w-12 h-12 flex items-center justify-center text-primary ring-2 ring-warning/20">
                                 <UserPlus className="w-6 h-6" />
                             </div>
                             <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight">ลงทะเบียนผู้ใช้ใหม่</CardTitle>

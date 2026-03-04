@@ -9,7 +9,8 @@ const globalForPrisma = globalThis as unknown as {
 let dbInstance: PrismaClient | any;
 
 // ตรวจสอบว่ากำลัง build อยู่หรือเปล่า (ไม่ใช่ runtime)
-const isBuilding = process.env.NEXT_PHASE === 'phase-production-build' || process.env.CI === 'true';
+// ⚠️ ห้ามใช้ CI=true เพราะ Nixpacks/Coolify bake CI=true เข้า Docker image → ยังค้างอยู่ตอน runtime
+const isBuilding = process.env.NEXT_PHASE === 'phase-production-build';
 
 if (isBuilding) {
   // ช่วง build: สร้าง mock proxy ที่คืนค่าที่ถูกต้อง

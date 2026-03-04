@@ -24,10 +24,10 @@ export default function Navbar({ userRole }: { userRole?: string }) {
                         />
                     </div>
                     <Link href="/" className="font-bold text-sm sm:text-lg hidden sm:block">
-                        กยศ. ร.ส.ล. (ลักษณะ 1)
+                        กยศ. รส.ล. (ลักษณะ 1)
                     </Link>
                     <Link href="/" className="font-bold text-sm sm:hidden">
-                        กยศ. ร.ส.ล.
+                        กยศ. รส.ล.
                     </Link>
                 </div>
 

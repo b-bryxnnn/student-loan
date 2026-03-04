@@ -231,7 +231,7 @@ export default async function Home() {
                       <td className="px-4 py-3 font-medium text-xs sm:text-sm">
                         มัธยมศึกษาตอนปลาย (ม.4-6)
                         <br />
-                        <span className="text-[10px] sm:text-xs text-muted-foreground">⭐ ร.ส.ล. อยู่ในระดับนี้</span>
+                        <span className="text-[10px] sm:text-xs text-muted-foreground">⭐ รส.ล. อยู่ในระดับนี้</span>
                       </td>
                       <td className="px-4 py-3 text-right">
                         <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">14,000 บาท</Badge>
@@ -514,7 +514,7 @@ export default async function Home() {
             <div className="relative w-7 h-7">
               <Image
                 src="https://upload.wikimedia.org/wikipedia/commons/9/9f/RSL001.png"
-                alt="ร.ส.ล."
+                alt="รส.ล."
                 fill
                 className="object-contain opacity-50"
                 unoptimized

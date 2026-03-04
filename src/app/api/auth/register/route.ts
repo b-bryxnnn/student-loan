@@ -16,16 +16,16 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
+        console.log("REGISTER body received:", JSON.stringify({ ...body, password: '***' }));
         const { prefix, firstName, lastName, studentId, idCard, email, password, borrowerType } = body;
 
         // === Backend Validation ===
-        if (!prefix || !firstName || !lastName || !idCard || !email || !password || !studentId) {
+        if (!prefix || !firstName || !lastName || !idCard || !email || !password) {
             const missing = [];
             if (!prefix) missing.push('คำนำหน้า');
             if (!firstName) missing.push('ชื่อ');
             if (!lastName) missing.push('นามสกุล');
             if (!idCard) missing.push('เลขบัตรประชาชน');
-            if (!studentId) missing.push('รหัสนักเรียน');
             if (!email) missing.push('อีเมล');
             if (!password) missing.push('รหัสผ่าน');
             return NextResponse.json({ error: `กรุณากรอกข้อมูลให้ครบถ้วน: ${missing.join(', ')}` }, { status: 400 });
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "เลขประจำตัวประชาชนไม่ถูกต้อง (กรุณาตรวจสอบความถูกต้องของเลข 13 หลัก)" }, { status: 400 });
         }
 
-        if (typeof studentId !== 'string' || studentId.trim().length < 1 || studentId.length > 20) {
+        if (studentId && (typeof studentId !== 'string' || studentId.trim().length < 1 || studentId.length > 20)) {
             return NextResponse.json({ error: "รหัสนักเรียนไม่ถูกต้อง" }, { status: 400 });
         }
 
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
                 prefix: prefix.trim(),
                 firstName: firstName.trim(),
                 lastName: lastName.trim(),
-                studentId: studentId.trim(),
+                studentId: studentId ? studentId.trim() : null,
                 gradeLevel: body.gradeLevel || null,
                 idCard,
                 email: email.trim().toLowerCase(),

@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldAlert, Fingerprint } from "lucide-react";
+import { Fingerprint } from "lucide-react";
 import { toast } from "sonner";
+import { validateThaiId } from "@/lib/validateThaiId";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -18,8 +20,23 @@ export default function LoginPage() {
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
 
+        if (!idCard || !password) {
+            toast.error("กรุณากรอกข้อมูลให้ครบ");
+            return;
+        }
+
+        if (idCard.length !== 13) {
+            toast.error("เลขบัตรประชาชนต้องมี 13 หลัก");
+            return;
+        }
+
+        if (!validateThaiId(idCard)) {
+            toast.error("เลขบัตรประชาชนไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง");
+            return;
+        }
+
+        setLoading(true);
         try {
             const res = await fetch("/api/auth/login", {
                 method: "POST",
@@ -35,7 +52,7 @@ export default function LoginPage() {
             } else {
                 toast.error(data.error || "เลขบัตรประชาชนหรือรหัสผ่านไม่ถูกต้อง");
             }
-        } catch (error) {
+        } catch {
             toast.error("เกิดข้อผิดพลาดในการเชื่อมต่อ");
         } finally {
             setLoading(false);
@@ -44,37 +61,53 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4">
-            <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] opacity-40 -z-10" />
-
-            <Card className="w-full max-w-md glass border-primary/20 shadow-2xl hover-lift">
+            <Card className="w-full max-w-md border-primary/10 shadow-lg">
                 <form onSubmit={handleLogin}>
-                    <CardHeader className="space-y-3 text-center">
-                        <div className="mx-auto bg-primary/10 p-4 rounded-full w-20 h-20 flex items-center justify-center text-primary mb-2">
-                            <Fingerprint className="w-10 h-10" />
+                    <CardHeader className="space-y-2 text-center pb-5 border-b border-border/50">
+                        <div className="flex items-center justify-center gap-3 mb-2">
+                            <div className="relative w-10 h-10">
+                                <Image
+                                    src="https://upload.wikimedia.org/wikipedia/commons/c/c8/Student_Loan_logo.svg"
+                                    alt="กยศ."
+                                    fill
+                                    className="object-contain"
+                                    unoptimized
+                                />
+                            </div>
+                            <div className="relative w-10 h-10">
+                                <Image
+                                    src="https://upload.wikimedia.org/wikipedia/commons/9/9f/RSL001.png"
+                                    alt="รส.ล."
+                                    fill
+                                    className="object-contain"
+                                    unoptimized
+                                />
+                            </div>
                         </div>
-                        <CardTitle className="text-2xl font-bold tracking-tight">เข้าสู่ระบบ</CardTitle>
-                        <CardDescription>
-                            กยศ. โรงเรียนรัตนโกสินทร์สมโภชลาดกระบัง
+                        <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight">เข้าสู่ระบบ</CardTitle>
+                        <CardDescription className="text-xs sm:text-sm">
+                            สำหรับนักเรียน — ระบบ กยศ. รส.ล.
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="idCard">เลขประจำตัวประชาชน (13 หลัก)</Label>
+                    <CardContent className="space-y-4 pt-5">
+                        <div className="space-y-1.5">
+                            <Label htmlFor="idCard" className="text-xs">เลขประจำตัวประชาชน (13 หลัก)</Label>
                             <Input
                                 id="idCard"
                                 type="text"
-                                placeholder="x-xxxx-xxxxx-xx-x"
+                                placeholder="ตัวเลข 13 หลัก"
                                 maxLength={13}
+                                inputMode="numeric"
                                 required
                                 value={idCard}
                                 onChange={(e) => setIdCard(e.target.value.replace(/[^0-9]/g, ''))}
-                                className="bg-background/50"
+                                className="bg-white font-mono tracking-wider text-sm"
                             />
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-1.5">
                             <div className="flex items-center justify-between">
-                                <Label htmlFor="password">รหัสผ่าน</Label>
-                                <Link href="/forgot-password" className="text-xs text-primary hover:underline" tabIndex={-1}>
+                                <Label htmlFor="password" className="text-xs">รหัสผ่าน</Label>
+                                <Link href="/forgot-password" className="text-[10px] text-primary hover:underline" tabIndex={-1}>
                                     ลืมรหัสผ่าน?
                                 </Link>
                             </div>
@@ -84,16 +117,16 @@ export default function LoginPage() {
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="bg-background/50"
+                                className="bg-white text-sm"
                             />
                         </div>
                     </CardContent>
-                    <CardFooter className="flex flex-col space-y-4 pt-4 border-t border-border/50">
-                        <Button type="submit" className="w-full" disabled={loading}>
+                    <CardFooter className="flex flex-col space-y-3 pt-5 border-t border-border/50">
+                        <Button type="submit" className="w-full text-sm font-semibold shadow-md shadow-primary/20" disabled={loading}>
                             {loading ? "กำลังตรวจสอบ..." : "เข้าสู่ระบบ"}
                         </Button>
-                        <div className="text-center text-sm text-muted-foreground w-full">
-                            ยังไม่มีบัญชีใช่หรือไม่?{" "}
+                        <div className="text-center text-xs text-muted-foreground w-full">
+                            ยังไม่มีบัญชี?{" "}
                             <Link href="/register" className="text-primary hover:underline font-semibold">
                                 ลงทะเบียนเลย
                             </Link>

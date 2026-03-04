@@ -12,7 +12,7 @@ model User {
   prefix          String        // คำนำหน้า
   firstName       String        // ชื่อ
   lastName        String        // นามสกุล
-  studentId       String        // รหัสนักเรียน
+  studentId       String?       // รหัสนักเรียน (บังคับที่ API level, optional ที่ DB เพราะ admin ไม่มี)
   gradeLevel      String?       // ระดับชั้น (ม.4, ม.5, ม.6)
   idCard          String        @unique // เลขบัตรประจำตัวประชาชน
   email           String        @unique // อีเมล

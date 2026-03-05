@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { revalidatePath } from 'next/cache';
 
 // GET: ดึงข้อมูลกู้ยืมทั้งหมด (admin)
 export async function GET() {
@@ -42,6 +43,8 @@ export async function POST(req: Request) {
             data: { title: title.trim(), content: content.trim(), sortOrder }
         });
 
+        revalidatePath('/');
+        revalidatePath('/loan-info');
         return NextResponse.json({ success: true, section }, { status: 201 });
     } catch (error) {
         console.error("CREATE_LOAN_INFO_ERROR:", error);
@@ -74,6 +77,8 @@ export async function PUT(req: Request) {
             data: updateData
         });
 
+        revalidatePath('/');
+        revalidatePath('/loan-info');
         return NextResponse.json({ success: true, section }, { status: 200 });
     } catch (error) {
         console.error("UPDATE_LOAN_INFO_ERROR:", error);
@@ -98,6 +103,8 @@ export async function DELETE(req: Request) {
 
         await db.loanInfoSection.delete({ where: { id } });
 
+        revalidatePath('/');
+        revalidatePath('/loan-info');
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {
         console.error("DELETE_LOAN_INFO_ERROR:", error);

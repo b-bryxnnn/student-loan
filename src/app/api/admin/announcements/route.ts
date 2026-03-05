@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { sendEmail } from '@/lib/email';
+import { revalidatePath } from 'next/cache';
 
 // GET: ดึงรายการประกาศทั้งหมด
 export async function GET() {
@@ -106,6 +107,8 @@ export async function POST(req: Request) {
             }
         }
 
+        revalidatePath('/');
+
         return NextResponse.json({
             success: true,
             announcementId: announcement.id,
@@ -137,6 +140,8 @@ export async function DELETE(req: Request) {
             where: { id },
             data: { isActive: false }
         });
+
+        revalidatePath('/');
 
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {

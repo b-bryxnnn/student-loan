@@ -68,7 +68,7 @@ export default async function Home() {
             โรงเรียนรัตนโกสินทร์สมโภชลาดกระบัง
           </p>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-2xl mx-auto px-2">
-            ลักษณะที่ 1 — ให้กู้ยืมเพื่อการศึกษาสำหรับนักเรียนที่ขาดแคลนทุนทรัพย์ (รายได้ครอบครัวไม่เกิน 360,000 บาท/ปี)
+            สำหรับนักเรียนที่ขาดแคลนทุนทรัพย์ (รายได้ครอบครัวไม่เกิน 360,000 บาท/ปี)
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-6 px-4 sm:px-0">
@@ -124,13 +124,14 @@ export default async function Home() {
             <p className="text-muted-foreground mt-1.5 text-sm">ทำตามขั้นตอนง่ายๆ</p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
             {[
-              { step: 1, icon: GraduationCap, title: "ลงทะเบียน", desc: "สมัครในเว็บนี้ ยืนยัน OTP" },
-              { step: 2, icon: ClipboardList, title: "กรอกคำขอ", desc: "กรอกฟอร์มขอกู้ออนไลน์" },
-              { step: 3, icon: FileCheck, title: "ส่งแบบยืนยัน", desc: "อัปโหลดแบบยืนยัน (PDF)" },
-              { step: 4, icon: FileSignature, title: "ส่งสัญญา", desc: "สัญญากู้ยืม (รายใหม่)" },
-              { step: 5, icon: CheckCircle2, title: "นำส่งตัวจริง", desc: "เอกสารตัวจริงที่ รร." },
+              { step: 1, icon: ClipboardList, title: "ส่งคำขอกู้ยืม", desc: "กรอกแบบฟอร์มในเว็บนี้" },
+              { step: 2, icon: Download, title: "โหลดแอป กยศ.", desc: "กยศ.Connect + ส่งเอกสารในแอป" },
+              { step: 3, icon: FileSignature, title: "ทำสัญญา/แบบยืนยัน", desc: "เซ็นเอกสารให้ครบ" },
+              { step: 4, icon: FileCheck, title: "สแกนเป็น PDF", desc: "รวมไฟล์ แล้วส่งในเว็บนี้" },
+              { step: 5, icon: CheckCircle2, title: "นำตัวจริงมาส่ง", desc: "ส่งเอกสารที่โรงเรียน" },
+              { step: 6, icon: ArrowRight, title: "แก้ไข (ถ้ามี)", desc: "หากมีปัญหา แก้แล้วส่งใหม่" },
             ].map(({ step, icon: Icon, title, desc }) => (
               <Card key={step} className="border-primary/10 shadow-sm text-center hover-lift">
                 <CardContent className="pt-4 pb-3 px-2 sm:px-3">
@@ -170,7 +171,7 @@ export default async function Home() {
                 <strong className="text-foreground">กองทุนเงินให้กู้ยืมเพื่อการศึกษา (กยศ.)</strong> เป็นกองทุนที่จัดตั้งขึ้นตามพระราชบัญญัติกองทุนเงินให้กู้ยืมเพื่อการศึกษา พ.ศ. 2560 เพื่อให้โอกาสทางการศึกษาแก่นักเรียน นักศึกษาที่ขาดแคลนทุนทรัพย์
               </p>
               <div className="bg-primary/5 border border-primary/15 rounded-lg p-3 sm:p-4">
-                <p className="font-semibold text-primary text-sm mb-1">ลักษณะที่ 1 — สำหรับโรงเรียนรัตนโกสินทร์สมโภชลาดกระบัง</p>
+                <p className="font-semibold text-primary text-sm mb-1">สำหรับโรงเรียนรัตนโกสินทร์สมโภชลาดกระบัง</p>
                 <p className="text-xs text-muted-foreground">
                   เนื่องจากเป็นสถานศึกษาของรัฐ จึงให้กู้ยืมค่าครองชีพเป็นหลัก โดยค่าเล่าเรียนจะได้รับการสนับสนุนจากรัฐโดยตรง
                 </p>
@@ -217,7 +218,7 @@ export default async function Home() {
                 <Banknote className="w-5 h-5 text-primary" />
                 กำหนดลักษณะและขอบเขตการให้เงินกู้ยืม — ปีการศึกษา 2569
               </CardTitle>
-              <CardDescription className="text-xs">ลักษณะที่ 1 (ผู้ขาดแคลนทุนทรัพย์) สำหรับสถานศึกษาระดับมัธยมปลาย</CardDescription>
+              <CardDescription className="text-xs">สำหรับสถานศึกษาระดับมัธยมปลาย (ผู้ขาดแคลนทุนทรัพย์)</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
@@ -432,7 +433,7 @@ export default async function Home() {
                 <div className="flex items-center gap-3">
                   <Download className="w-5 h-5 text-primary shrink-0" />
                   <div>
-                    <h3 className="font-semibold text-sm">แบบคำขอกู้ยืม กยศ.102</h3>
+                    <h3 className="font-semibold text-sm">หนังสือให้ความยินยอมเปิดเผยข้อมูล กยศ.102</h3>
                     <p className="text-xs text-muted-foreground">PDF — ดาวน์โหลดจาก studentloan.or.th</p>
                   </div>
                   <ExternalLink className="w-4 h-4 text-muted-foreground ml-auto shrink-0" />

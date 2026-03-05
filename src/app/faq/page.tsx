@@ -48,7 +48,7 @@ export default async function FAQPage() {
                             <HelpCircle className="w-8 h-8 text-primary" />
                             คำถามที่พบบ่อย (FAQ)
                         </h1>
-                        <p className="text-muted-foreground mt-1">รวมคำตอบเกี่ยวกับระบบกู้ยืมเงิน กยศ. ลักษณะที่ 1</p>
+                        <p className="text-muted-foreground mt-1">รวมคำตอบเกี่ยวกับระบบกู้ยืมเงิน กยศ.</p>
                     </div>
                 </div>
 

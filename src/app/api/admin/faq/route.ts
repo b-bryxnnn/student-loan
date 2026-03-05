@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { revalidatePath } from 'next/cache';
 
 // GET: ดึง FAQ ทั้งหมด (สำหรับ admin ดูทั้ง active/inactive)
 export async function GET() {
@@ -43,6 +44,7 @@ export async function POST(req: Request) {
             data: { question: question.trim(), answer: answer.trim(), sortOrder }
         });
 
+        revalidatePath('/faq');
         return NextResponse.json({ success: true, faq }, { status: 201 });
     } catch (error) {
         console.error("CREATE_FAQ_ERROR:", error);
@@ -75,6 +77,7 @@ export async function PUT(req: Request) {
             data: updateData
         });
 
+        revalidatePath('/faq');
         return NextResponse.json({ success: true, faq }, { status: 200 });
     } catch (error) {
         console.error("UPDATE_FAQ_ERROR:", error);
@@ -99,6 +102,7 @@ export async function DELETE(req: Request) {
 
         await db.faqItem.delete({ where: { id } });
 
+        revalidatePath('/faq');
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {
         console.error("DELETE_FAQ_ERROR:", error);

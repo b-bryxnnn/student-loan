@@ -24,6 +24,9 @@ export default async function AdminDashboardPage() {
                     <p className="text-muted-foreground mt-2">ภาพรวมการส่งเอกสารและคำขอกู้ยืม</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                    <Link href="/admin/students">
+                        <Button variant="outline" className="hover-lift" size="sm">จัดการนักเรียน</Button>
+                    </Link>
                     <Link href="/admin/announcements">
                         <Button variant="outline" className="hover-lift" size="sm">จัดการประกาศ</Button>
                     </Link>

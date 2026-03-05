@@ -120,18 +120,18 @@ export default async function Home() {
         {/* =================== ขั้นตอน =================== */}
         <div className="mt-14 sm:mt-16 max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300">
           <div className="text-center mb-6 sm:mb-8">
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary">ขั้นตอนการกู้ยืมเงิน กยศ.</h2>
-            <p className="text-muted-foreground mt-1.5 text-sm">ทำตามขั้นตอนง่ายๆ</p>
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary">ขั้นตอนการดำเนินการกู้ยืมเงิน กยศ.</h2>
+            <p className="text-muted-foreground mt-1.5 text-sm">โปรดดำเนินการตามลำดับต่อไปนี้ให้ครบถ้วน</p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
             {[
-              { step: 1, icon: ClipboardList, title: "ส่งคำขอกู้ยืม", desc: "กรอกแบบฟอร์มในเว็บนี้" },
-              { step: 2, icon: Download, title: "โหลดแอป กยศ.", desc: "กยศ.Connect + ส่งเอกสารในแอป" },
-              { step: 3, icon: FileSignature, title: "ทำสัญญา/แบบยืนยัน", desc: "เซ็นเอกสารให้ครบ" },
-              { step: 4, icon: FileCheck, title: "สแกนเป็น PDF", desc: "รวมไฟล์ แล้วส่งในเว็บนี้" },
-              { step: 5, icon: CheckCircle2, title: "นำตัวจริงมาส่ง", desc: "ส่งเอกสารที่โรงเรียน" },
-              { step: 6, icon: ArrowRight, title: "แก้ไข (ถ้ามี)", desc: "หากมีปัญหา แก้แล้วส่งใหม่" },
+              { step: 1, icon: ClipboardList, title: "ยื่นคำขอกู้ยืม", desc: "กรอกแบบคำขอกู้ยืมเบื้องต้นผ่านระบบนี้" },
+              { step: 2, icon: Download, title: "ดาวน์โหลดแอปพลิเคชัน", desc: "ติดตั้ง กยศ.Connect และดำเนินการตามที่กำหนด" },
+              { step: 3, icon: FileSignature, title: "ลงนามสัญญาและแบบยืนยัน", desc: "ลงนามสัญญากู้ยืมและแบบยืนยันเบิกเงิน" },
+              { step: 4, icon: FileCheck, title: "จัดทำไฟล์ PDF", desc: "สแกนเอกสารรวมเป็น PDF และอัปโหลดผ่านระบบนี้" },
+              { step: 5, icon: CheckCircle2, title: "นำส่งเอกสารตัวจริง", desc: "นำเอกสารฉบับจริงมายื่น ณ สถานศึกษา" },
+              { step: 6, icon: ArrowRight, title: "แก้ไข (หากมี)", desc: "หากเอกสารไม่สมบูรณ์ แก้ไขแล้วส่งใหม่" },
             ].map(({ step, icon: Icon, title, desc }) => (
               <Card key={step} className="border-primary/10 shadow-sm text-center hover-lift">
                 <CardContent className="pt-4 pb-3 px-2 sm:px-3">
@@ -163,18 +163,79 @@ export default async function Home() {
             <CardHeader className="pb-2">
               <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-primary" />
-                กยศ. คืออะไร?
+                กองทุนเงินให้กู้ยืมเพื่อการศึกษา (กยศ.) คืออะไร?
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm leading-relaxed text-muted-foreground">
               <p>
-                <strong className="text-foreground">กองทุนเงินให้กู้ยืมเพื่อการศึกษา (กยศ.)</strong> เป็นกองทุนที่จัดตั้งขึ้นตามพระราชบัญญัติกองทุนเงินให้กู้ยืมเพื่อการศึกษา พ.ศ. 2560 เพื่อให้โอกาสทางการศึกษาแก่นักเรียน นักศึกษาที่ขาดแคลนทุนทรัพย์
+                <strong className="text-foreground">กองทุนเงินให้กู้ยืมเพื่อการศึกษา (กยศ.)</strong> เป็นหน่วยงานของรัฐที่จัดตั้งขึ้นตามพระราชบัญญัติกองทุนเงินให้กู้ยืมเพื่อการศึกษา พ.ศ. 2560 มีวัตถุประสงค์เพื่อให้โอกาสทางการศึกษาแก่นักเรียนและนักศึกษาที่ขาดแคลนทุนทรัพย์ หรือศึกษาในสาขาวิชาที่เป็นความต้องการของประเทศ
               </p>
-              <div className="bg-primary/5 border border-primary/15 rounded-lg p-3 sm:p-4">
+              <p>
+                กองทุนแบ่งลักษณะการให้กู้ยืมออกเป็น <strong className="text-foreground">4 ลักษณะ</strong> ดังนี้
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="bg-primary/5 border border-primary/15 rounded-lg p-3">
+                  <p className="font-semibold text-primary text-xs mb-1">ลักษณะที่ 1</p>
+                  <p className="text-xs text-muted-foreground">เงินกู้ยืมเพื่อการศึกษาสำหรับนักเรียน/นักศึกษาที่ขาดแคลนทุนทรัพย์ (รายได้ครอบครัวไม่เกิน 360,000 บาท/ปี)</p>
+                </div>
+                <div className="bg-muted/30 border border-border/50 rounded-lg p-3">
+                  <p className="font-semibold text-xs mb-1">ลักษณะที่ 2</p>
+                  <p className="text-xs text-muted-foreground">เงินกู้ยืมเพื่อการศึกษาสำหรับผู้ที่ต้องการเงินกู้ยืมในสาขาวิชาที่เป็นความต้องการหลัก</p>
+                </div>
+                <div className="bg-muted/30 border border-border/50 rounded-lg p-3">
+                  <p className="font-semibold text-xs mb-1">ลักษณะที่ 3</p>
+                  <p className="text-xs text-muted-foreground">เงินกู้ยืมเพื่อการศึกษาสำหรับผู้ศึกษาในสาขาวิชาที่ขาดแคลน หรือสาขาที่กองทุนมุ่งส่งเสริม</p>
+                </div>
+                <div className="bg-muted/30 border border-border/50 rounded-lg p-3">
+                  <p className="font-semibold text-xs mb-1">ลักษณะที่ 4</p>
+                  <p className="text-xs text-muted-foreground">เงินกู้ยืมเพื่อการศึกษาสำหรับผู้ศึกษาในสาขาวิชาที่ขาดแคลนและเป็นผู้ขาดแคลนทุนทรัพย์</p>
+                </div>
+              </div>
+              <div className="bg-primary/5 border border-primary/15 rounded-lg p-3 sm:p-4 mt-2">
                 <p className="font-semibold text-primary text-sm mb-1">สำหรับโรงเรียนรัตนโกสินทร์สมโภชลาดกระบัง</p>
                 <p className="text-xs text-muted-foreground">
-                  เนื่องจากเป็นสถานศึกษาของรัฐ จึงให้กู้ยืมค่าครองชีพเป็นหลัก โดยค่าเล่าเรียนจะได้รับการสนับสนุนจากรัฐโดยตรง
+                  เนื่องจากเป็นสถานศึกษาของรัฐ ค่าเล่าเรียนจะได้รับการสนับสนุนจากรัฐบาลโดยตรง จึงให้กู้ยืมเฉพาะ<strong>ค่าครองชีพ</strong>เป็นหลัก ภายใต้ลักษณะที่ 1 (ผู้ขาดแคลนทุนทรัพย์)
                 </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* แอปพลิเคชัน กยศ. Connect */}
+          <Card className="border-primary/10 shadow-sm overflow-hidden">
+            <div className="h-1 bg-gradient-to-r from-primary/40 via-primary/80 to-primary/40" />
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                <Download className="w-5 h-5 text-primary" />
+                แอปพลิเคชัน กยศ. Connect
+              </CardTitle>
+              <CardDescription className="text-xs">แอปพลิเคชันสำหรับดำเนินการกู้ยืมเงิน กยศ.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm leading-relaxed text-muted-foreground">
+              <p>
+                <strong className="text-foreground">กยศ. Connect</strong> เป็นแอปพลิเคชันทางการของกองทุนเงินให้กู้ยืมเพื่อการศึกษา ที่ผู้กู้ยืมทุกคนจำเป็นต้องดาวน์โหลดและใช้งาน เพื่อดำเนินการต่างๆ ได้แก่
+              </p>
+              <div className="space-y-2">
+                {[
+                  "ลงทะเบียนและยืนยันตัวตนผู้กู้ยืม",
+                  "ยื่นแบบคำขอกู้ยืมเงิน ผ่านระบบ กยศ.",
+                  "ลงนามสัญญากู้ยืมเงินแบบดิจิทัล (e-Signature)",
+                  "ลงนามแบบยืนยันการเบิกเงินกู้ยืมในแต่ละภาคเรียน",
+                  "บันทึกกิจกรรมจิตอาสา",
+                  "ตรวจสอบสถานะการกู้ยืมและยอดหนี้คงค้าง",
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <span className="text-xs sm:text-sm text-muted-foreground">{item}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2 pt-2">
+                <a href="https://apps.apple.com/th/app/กยศ-connect/id1659848498" target="_blank" rel="noopener noreferrer">
+                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 cursor-pointer text-xs">App Store (iOS)</Badge>
+                </a>
+                <a href="https://play.google.com/store/apps/details?id=th.or.studentloan.connect" target="_blank" rel="noopener noreferrer">
+                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 cursor-pointer text-xs">Google Play (Android)</Badge>
+                </a>
               </div>
             </CardContent>
           </Card>

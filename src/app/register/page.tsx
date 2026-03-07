@@ -130,6 +130,11 @@ export default function RegisterPage() {
 
     // ====== Validation ======
     const validateStep1 = (): boolean => {
+        if (!idCardImage) { toast.error("กรุณาถ่ายรูปบัตรประชาชน"); return false; }
+        return true;
+    };
+
+    const validateStep2 = (): boolean => {
         const newErrors: Record<string, string> = {};
         if (!formData.prefix) newErrors.prefix = "กรุณาเลือกคำนำหน้า";
         if (!formData.firstName.trim()) newErrors.firstName = "กรุณากรอกชื่อ";
@@ -138,6 +143,8 @@ export default function RegisterPage() {
         if (!formData.gradeLevel) newErrors.gradeLevel = "กรุณาเลือกระดับชั้น";
         if (!formData.idCard) newErrors.idCard = "กรุณากรอกเลขประจำตัวประชาชน";
         else if (formData.idCard.length !== 13) newErrors.idCard = "เลขบัตรประชาชนต้องมี 13 หลัก";
+        if (!formData.phone) newErrors.phone = "กรุณากรอกเบอร์โทรศัพท์";
+        else if (!/^0\d{8,9}$/.test(formData.phone)) newErrors.phone = "รูปแบบเบอร์โทรไม่ถูกต้อง";
         if (!formData.email) newErrors.email = "กรุณากรอกอีเมล";
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = "รูปแบบอีเมลไม่ถูกต้อง";
         if (!formData.password) newErrors.password = "กรุณากรอกรหัสผ่าน";
@@ -147,13 +154,12 @@ export default function RegisterPage() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const validateStep2 = (): boolean => {
-        if (!idCardImage) { toast.error("กรุณาถ่ายรูปบัตรประชาชน"); return false; }
+    const validateStep3 = (): boolean => {
         if (!faceImage) { toast.error("กรุณายืนยันตัวตนด้วยใบหน้า"); return false; }
         return true;
     };
 
-    const validateStep3 = (): boolean => {
+    const validateStep4 = (): boolean => {
         if (!consentParent || !consentLoan || !consentPdpa) {
             toast.error("กรุณายอมรับเงื่อนไขทั้ง 3 ข้อก่อนดำเนินการต่อ");
             return false;
@@ -162,9 +168,10 @@ export default function RegisterPage() {
     };
 
     const goNext = () => {
-        if (step === 1 && !validateStep1()) { toast.error("กรุณาตรวจสอบข้อมูลให้ครบถ้วน"); return; }
-        if (step === 2 && !validateStep2()) return;
-        if (step === 3) { if (!validateStep3()) return; handleRegister(); return; }
+        if (step === 1 && !validateStep1()) return;
+        if (step === 2 && !validateStep2()) { toast.error("กรุณาตรวจสอบข้อมูลให้ครบถ้วน"); return; }
+        if (step === 3 && !validateStep3()) return;
+        if (step === 4) { if (!validateStep4()) return; handleRegister(); return; }
         setStep(prev => prev + 1);
     };
 
@@ -190,7 +197,7 @@ export default function RegisterPage() {
             if (res.ok) {
                 toast.success("ระบบได้ส่งรหัส OTP ไปยังอีเมลของคุณแล้ว");
                 setTempUserId(data.userId);
-                setStep(4);
+                setStep(5);
             } else {
                 toast.error(data.error || "เกิดข้อผิดพลาดในการสมัครสมาชิก");
             }
@@ -236,10 +243,10 @@ export default function RegisterPage() {
 
     // Step indicator
     const STEPS = [
-        { num: 1, label: "ข้อมูลส่วนตัว", icon: UserPlus },
-        { num: 2, label: "ยืนยันตัวตน", icon: Camera },
-        { num: 3, label: "ยินยอมเงื่อนไข", icon: ScrollText },
-        { num: 4, label: "ยืนยัน OTP", icon: ShieldCheck },
+        { num: 1, label: "สแกนบัตร", icon: CreditCard },
+        { num: 2, label: "ข้อมูลส่วนตัว", icon: UserPlus },
+        { num: 3, label: "สแกนหน้า", icon: Camera },
+        { num: 4, label: "เงื่อนไข", icon: ScrollText },
     ];
 
     return (
@@ -261,8 +268,83 @@ export default function RegisterPage() {
                     </div>
                 </div>
 
-                {/* ====================== STEP 1: Personal Info ====================== */}
+                {/* ====================== STEP 1: ID Card ====================== */}
                 {step === 1 && (
+                    <>
+                        <CardHeader className="text-center space-y-1 pb-3 border-b border-border/50">
+                            <CardTitle className="text-xl font-bold tracking-tight">อัปโหลดบัตรประชาชน</CardTitle>
+                            <CardDescription className="text-xs">ถ่ายรูปบัตรประชาชนเพื่อให้ระบบกรอกข้อมูลเบื้องต้นให้คุณอัติโนมัติ</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6 pt-5">
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2 text-sm font-semibold">
+                                    <CreditCard className="w-4 h-4 text-primary" />
+                                    ถ่ายรูปบัตรประจำตัวประชาชน <span className="text-destructive">*</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">ถ่ายรูปด้านหน้าบัตรให้ชัดเจน เห็นข้อมูลครบถ้วน (JPG/PNG ไม่เกิน 5MB)</p>
+
+                                {idCardImage ? (
+                                    <div className="space-y-4">
+                                        <div className="relative rounded-lg overflow-hidden border border-primary/20 max-w-sm mx-auto">
+                                            <img src={idCardImage} alt="บัตรประชาชน" className="w-full h-auto" />
+                                            <div className="absolute top-2 right-2">
+                                                <CheckCircle2 className="w-6 h-6 text-success bg-white rounded-full" />
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col items-center gap-3">
+                                            <IdCardOcr
+                                                image={idCardImage}
+                                                onResult={(res) => {
+                                                    if (res.idCard) handleIdCardChange({ target: { value: res.idCard } } as any);
+                                                    if (res.prefix) handleSelectChange('prefix', res.prefix);
+                                                    if (res.firstName) handleChange({ target: { name: 'firstName', value: res.firstName } } as any);
+                                                    if (res.lastName) handleChange({ target: { name: 'lastName', value: res.lastName } } as any);
+                                                    if (Object.keys(res).length > 0) {
+                                                        toast.success("ดึงข้อมูลจากบัตรสำเร็จ กรุณาตรวจสอบความถูกต้องในหน้าถัดไป");
+                                                        setStep(2);
+                                                    } else {
+                                                        toast.error("ไม่สามารถอ่านข้อมูลจากภาพได้ หรือไม่พบข้อมูล กรุณากรอกเองในหน้าถัดไป");
+                                                        setStep(2);
+                                                    }
+                                                }}
+                                            />
+                                            <Button variant="ghost" size="sm" onClick={() => { setIdCardImage(null); if (idCardInputRef.current) idCardInputRef.current.value = ""; }} className="text-xs">
+                                                ถ่ายรูปบัตรใหม่
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div
+                                        className="border-2 border-dashed border-primary/20 rounded-lg p-6 text-center cursor-pointer hover:border-primary/40 transition-colors"
+                                        onClick={() => idCardInputRef.current?.click()}
+                                    >
+                                        <Upload className="w-8 h-8 text-primary/40 mx-auto mb-2" />
+                                        <p className="text-sm text-muted-foreground">คลิกเพื่ออัปโหลดหรือถ่ายรูประบบจะช่วยกรอกข้อมูลอัตโนมัติ</p>
+                                    </div>
+                                )}
+                                <input
+                                    ref={idCardInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    onChange={handleIdCardPhoto}
+                                    className="hidden"
+                                />
+                            </div>
+                        </CardContent>
+                        <CardFooter className="flex flex-col space-y-3 border-t border-border/50 pt-5">
+                            <Button type="button" size="lg" className="w-full text-sm font-semibold shadow-md shadow-primary/20" onClick={goNext}>
+                                ถัดไป — กรอก/ตรวจสอบข้อมูลส่วนตัว <ChevronRight className="w-4 h-4 ml-1" />
+                            </Button>
+                            <div className="text-center text-xs text-muted-foreground w-full">
+                                มีบัญชีอยู่แล้ว? <Link href="/login" className="text-primary hover:underline font-semibold">เข้าสู่ระบบ</Link>
+                            </div>
+                        </CardFooter>
+                    </>
+                )}
+
+                {/* ====================== STEP 2: Personal Info ====================== */}
+                {step === 2 && (
                     <>
                         <CardHeader className="text-center space-y-1 pb-3 border-b border-border/50">
                             <CardTitle className="text-xl font-bold tracking-tight">ข้อมูลส่วนตัว</CardTitle>
@@ -338,12 +420,13 @@ export default function RegisterPage() {
                                     )}
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label htmlFor="phone" className="text-xs">เบอร์โทรศัพท์ <span className="text-muted-foreground font-normal">(ไม่บังคับ)</span></Label>
+                                    <Label htmlFor="phone" className="text-xs">เบอร์โทรศัพท์ <span className="text-destructive">*</span></Label>
                                     <Input
                                         id="phone" name="phone" value={formData.phone}
                                         onChange={handlePhoneChange} maxLength={10} inputMode="numeric"
-                                        className="bg-white text-sm" placeholder="0812345678"
+                                        className={`bg-white text-sm ${errors.phone ? 'border-destructive' : ''}`} placeholder="0812345678"
                                     />
+                                    <FieldError field="phone" />
                                 </div>
                             </div>
 
@@ -382,87 +465,29 @@ export default function RegisterPage() {
                                 </Select>
                             </div>
                         </CardContent>
-                        <CardFooter className="flex flex-col space-y-3 border-t border-border/50 pt-5">
-                            <Button type="button" size="lg" className="w-full text-sm font-semibold shadow-md shadow-primary/20" onClick={goNext}>
+                        <CardFooter className="flex gap-2 border-t border-border/50 pt-5">
+                            <Button variant="outline" onClick={goBack} className="flex-1">
+                                <ChevronLeft className="w-4 h-4 mr-1" /> ย้อนกลับ
+                            </Button>
+                            <Button type="button" onClick={goNext} className="flex-1 shadow-md shadow-primary/20">
                                 ถัดไป — ยืนยันตัวตน <ChevronRight className="w-4 h-4 ml-1" />
                             </Button>
-                            <div className="text-center text-xs text-muted-foreground w-full">
-                                มีบัญชีอยู่แล้ว? <Link href="/login" className="text-primary hover:underline font-semibold">เข้าสู่ระบบ</Link>
-                            </div>
                         </CardFooter>
                     </>
                 )}
 
-                {/* ====================== STEP 2: ID Card + Face ====================== */}
-                {step === 2 && (
+                {/* ====================== STEP 3: Face Liveness ====================== */}
+                {step === 3 && (
                     <>
                         <CardHeader className="text-center space-y-1 pb-3 border-b border-border/50">
-                            <CardTitle className="text-xl font-bold tracking-tight">ยืนยันตัวตน</CardTitle>
-                            <CardDescription className="text-xs">ถ่ายรูปบัตรประชาชนและสแกนใบหน้าเพื่อยืนยันตัวตน</CardDescription>
+                            <CardTitle className="text-xl font-bold tracking-tight">สแกนใบหน้า</CardTitle>
+                            <CardDescription className="text-xs">สแกนใบหน้าเพื่อยืนยันตัวตน ป้องกันการสวมรอย</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6 pt-5">
-
-                            {/* ID Card Photo */}
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2 text-sm font-semibold">
-                                    <CreditCard className="w-4 h-4 text-primary" />
-                                    ถ่ายรูปบัตรประจำตัวประชาชน <span className="text-destructive">*</span>
-                                </div>
-                                <p className="text-xs text-muted-foreground">ถ่ายรูปด้านหน้าบัตรให้ชัดเจน เห็นข้อมูลครบถ้วน (JPG/PNG ไม่เกิน 5MB)</p>
-
-                                {idCardImage ? (
-                                    <div className="space-y-4">
-                                        <div className="relative rounded-lg overflow-hidden border border-primary/20 max-w-sm mx-auto">
-                                            <img src={idCardImage} alt="บัตรประชาชน" className="w-full h-auto" />
-                                            <div className="absolute top-2 right-2">
-                                                <CheckCircle2 className="w-6 h-6 text-success bg-white rounded-full" />
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-col items-center gap-3">
-                                            <IdCardOcr
-                                                image={idCardImage}
-                                                onResult={(res) => {
-                                                    if (res.idCard) handleIdCardChange({ target: { value: res.idCard } } as any);
-                                                    if (res.prefix) handleSelectChange('prefix', res.prefix);
-                                                    if (res.firstName) handleChange({ target: { name: 'firstName', value: res.firstName } } as any);
-                                                    if (res.lastName) handleChange({ target: { name: 'lastName', value: res.lastName } } as any);
-                                                    if (Object.keys(res).length > 0) {
-                                                        toast.success("ดึงข้อมูลจากบัตรสำเร็จ กรุณาตรวจสอบความถูกต้อง");
-                                                        setStep(1); // ย้อนกลับไปหน้าข้อมูลเพื่อตรวจสอบ
-                                                    } else {
-                                                        toast.error("ไม่สามารถอ่านข้อมูลจากภาพได้ หรือไม่พบข้อมูล กรุณากรอกเอง");
-                                                    }
-                                                }}
-                                            />
-                                            <Button variant="ghost" size="sm" onClick={() => { setIdCardImage(null); if (idCardInputRef.current) idCardInputRef.current.value = ""; }} className="text-xs">
-                                                ถ่ายรูปบัตรใหม่
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div
-                                        className="border-2 border-dashed border-primary/20 rounded-lg p-6 text-center cursor-pointer hover:border-primary/40 transition-colors"
-                                        onClick={() => idCardInputRef.current?.click()}
-                                    >
-                                        <Upload className="w-8 h-8 text-primary/40 mx-auto mb-2" />
-                                        <p className="text-sm text-muted-foreground">คลิกเพื่ออัปโหลดหรือถ่ายรูป</p>
-                                    </div>
-                                )}
-                                <input
-                                    ref={idCardInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    capture="environment"
-                                    onChange={handleIdCardPhoto}
-                                    className="hidden"
-                                />
-                            </div>
-
-                            {/* Face Liveness */}
-                            <div className="space-y-3 border-t border-border/50 pt-4">
-                                <div className="flex items-center gap-2 text-sm font-semibold">
                                     <Camera className="w-4 h-4 text-primary" />
-                                    ยืนยันตัวตนด้วยใบหน้า <span className="text-destructive">*</span>
+                                    ถ่ายภาพใบหน้า <span className="text-destructive">*</span>
                                 </div>
                                 <FaceLiveness
                                     onComplete={(img) => setFaceImage(img)}
@@ -480,8 +505,8 @@ export default function RegisterPage() {
                     </>
                 )}
 
-                {/* ====================== STEP 3: Consent ====================== */}
-                {step === 3 && (
+                {/* ====================== STEP 4: Consent ====================== */}
+                {step === 4 && (
                     <>
                         <CardHeader className="text-center space-y-1 pb-3 border-b border-border/50">
                             <CardTitle className="text-xl font-bold tracking-tight">ข้อตกลงและเงื่อนไข</CardTitle>
@@ -551,8 +576,8 @@ export default function RegisterPage() {
                     </>
                 )}
 
-                {/* ====================== STEP 4: OTP ====================== */}
-                {step === 4 && (
+                {/* ====================== STEP 5: OTP ====================== */}
+                {step === 5 && (
                     <form onSubmit={handleVerifyOTP}>
                         <CardHeader className="text-center space-y-2 pb-5 border-b border-border/50">
                             <div className="mx-auto bg-success/10 p-3 rounded-full w-12 h-12 flex items-center justify-center text-success">

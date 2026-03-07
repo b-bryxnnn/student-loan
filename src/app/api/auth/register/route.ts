@@ -20,12 +20,13 @@ export async function POST(req: Request) {
         const { prefix, firstName, lastName, studentId, idCard, phone, email, password, borrowerType, idCardImage, faceImage, consentParent, consentLoan, consentPdpa } = body;
 
         // === Backend Validation ===
-        if (!prefix || !firstName || !lastName || !idCard || !email || !password) {
+        if (!prefix || !firstName || !lastName || !idCard || !email || !phone || !password) {
             const missing = [];
             if (!prefix) missing.push('คำนำหน้า');
             if (!firstName) missing.push('ชื่อ');
             if (!lastName) missing.push('นามสกุล');
             if (!idCard) missing.push('เลขบัตรประชาชน');
+            if (!phone) missing.push('เบอร์โทรศัพท์');
             if (!email) missing.push('อีเมล');
             if (!password) missing.push('รหัสผ่าน');
             return NextResponse.json({ error: `กรุณากรอกข้อมูลให้ครบถ้วน: ${missing.join(', ')}` }, { status: 400 });
@@ -54,9 +55,9 @@ export async function POST(req: Request) {
             console.warn("WARNING: Thai ID checksum failed for:", idCard, "— allowing registration anyway");
         }
 
-        // ตรวจเบอร์โทร (ถ้ามี)
-        if (phone && !/^0\d{8,9}$/.test(phone)) {
-            return NextResponse.json({ error: "เบอร์โทรศัพท์ไม่ถูกต้อง (เช่น 0812345678)" }, { status: 400 });
+        // ตรวจเบอร์โทร
+        if (!/^0\d{8,9}$/.test(phone)) {
+            return NextResponse.json({ error: "เบอร์โทรศัพท์ไม่ถูกต้อง (ต้องขึ้นต้นด้วย 0 และมี 9-10 หลัก)" }, { status: 400 });
         }
 
         if (studentId && (typeof studentId !== 'string' || studentId.trim().length < 1 || studentId.length > 20)) {

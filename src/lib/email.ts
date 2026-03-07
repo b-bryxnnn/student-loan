@@ -14,76 +14,77 @@
 import nodemailer from 'nodemailer';
 
 // ========== โหมด 1: Apps Script ==========
-const sendViaAppsScript = async (to: string, subject: string, html: string): Promise<boolean> => {
-    const url = process.env.APPS_SCRIPT_URL;
-    if (!url) return false;
+const sendViaAppsScript = async (to: string, subject: string, html: string, text?: string): Promise<boolean> => {
+  const url = process.env.APPS_SCRIPT_URL;
+  if (!url) return false;
 
-    try {
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ to, subject, html, secret: process.env.APPS_SCRIPT_SECRET || '' }),
-        });
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, subject, html, text: text || '', secret: process.env.APPS_SCRIPT_SECRET || '' }),
+    });
 
-        const data = await res.json();
-        if (data.success) {
-            console.log("Email sent via Apps Script to:", to);
-            return true;
-        } else {
-            console.error("Apps Script error:", data.error);
-            return false;
-        }
-    } catch (error) {
-        console.error("Apps Script fetch error:", error);
-        return false;
+    const data = await res.json();
+    if (data.success) {
+      console.log("Email sent via Apps Script to:", to);
+      return true;
+    } else {
+      console.error("Apps Script error:", data.error);
+      return false;
     }
+  } catch (error) {
+    console.error("Apps Script fetch error:", error);
+    return false;
+  }
 };
 
 // ========== โหมด 2: Nodemailer ==========
 const getTransporter = () => {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return null;
-    return nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-        },
-    });
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return null;
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
 };
 
-const sendViaNodemailer = async (to: string, subject: string, html: string): Promise<boolean> => {
-    const transporter = getTransporter();
-    if (!transporter) return false;
+const sendViaNodemailer = async (to: string, subject: string, html: string, text?: string): Promise<boolean> => {
+  const transporter = getTransporter();
+  if (!transporter) return false;
 
-    try {
-        const info = await transporter.sendMail({
-            from: `"ระบบ กยศ. รส.ล." <${process.env.EMAIL_USER}>`,
-            to,
-            subject,
-            html,
-        });
-        console.log("Email sent via Nodemailer:", info.messageId);
-        return true;
-    } catch (error) {
-        console.error("Nodemailer error:", error);
-        return false;
-    }
+  try {
+    const info = await transporter.sendMail({
+      from: `"ระบบ กยศ. รส.ล." <${process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      text: text || "ระบบ กยศ. รส.ล. มีข้อความใหม่ถึงคุณ กรุณาเปิดอ่านในรูปแบบ HTML",
+      html,
+    });
+    console.log("Email sent via Nodemailer:", info.messageId);
+    return true;
+  } catch (error) {
+    console.error("Nodemailer error:", error);
+    return false;
+  }
 };
 
 // ========== ฟังก์ชันหลัก ==========
-export const sendEmail = async (to: string, subject: string, html: string): Promise<boolean> => {
-    // ลอง Apps Script ก่อน
-    if (process.env.APPS_SCRIPT_URL) {
-        return sendViaAppsScript(to, subject, html);
-    }
+export const sendEmail = async (to: string, subject: string, html: string, text?: string): Promise<boolean> => {
+  // ลอง Apps Script ก่อน
+  if (process.env.APPS_SCRIPT_URL) {
+    return sendViaAppsScript(to, subject, html, text);
+  }
 
-    // Fallback ไป Nodemailer
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-        return sendViaNodemailer(to, subject, html);
-    }
+  // Fallback ไป Nodemailer
+  if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+    return sendViaNodemailer(to, subject, html, text);
+  }
 
-    console.warn("⚠️ ไม่มีการตั้งค่าอีเมล (ต้องมี APPS_SCRIPT_URL หรือ EMAIL_USER+EMAIL_PASS)");
-    return false;
+  console.warn("⚠️ ไม่มีการตั้งค่าอีเมล (ต้องมี APPS_SCRIPT_URL หรือ EMAIL_USER+EMAIL_PASS)");
+  return false;
 };
 
 // ========== Email Wrapper (HTML Card Template) ==========
@@ -124,8 +125,8 @@ const wrapEmailHtml = (title: string, body: string) => `
 </html>`;
 
 export const sendOTPEmail = async (to: string, otp: string) => {
-    const subject = "รหัส OTP ยืนยันอีเมล — ระบบ กยศ. รส.ล.";
-    const body = `
+  const subject = "รหัส OTP ยืนยันอีเมล — ระบบ กยศ. รส.ล.";
+  const body = `
       <p style="margin:0 0 16px;color:#334155;font-size:14px;line-height:1.7;">
         คุณได้สมัครเข้าใช้งานระบบส่งเอกสาร กยศ. เบื้องต้น กรุณานำรหัสด้านล่างไปกรอกเพื่อยืนยันอีเมลของคุณ
       </p>
@@ -137,12 +138,13 @@ export const sendOTPEmail = async (to: string, otp: string) => {
       <p style="margin:0 0 4px;color:#64748b;font-size:13px;">รหัสนี้จะหมดอายุภายใน <strong>15 นาที</strong></p>
       <p style="margin:0;color:#94a3b8;font-size:12px;">หากคุณไม่ได้ทำรายการนี้ กรุณาเพิกเฉยต่ออีเมลฉบับนี้</p>
     `;
-    return sendEmail(to, subject, wrapEmailHtml("รหัส OTP ยืนยันอีเมล", body));
+  const text = `รหัส OTP ยืนยันอีเมลของคุณคือ: ${otp}\nรหัสนี้จะหมดอายุภายใน 15 นาที\nหากคุณไม่ได้ทำรายการนี้ กรุณาข้ามผ่านข้อความนี้`;
+  return sendEmail(to, subject, wrapEmailHtml("รหัส OTP ยืนยันอีเมล", body), text);
 }
 
 export const sendPasswordResetOTP = async (to: string, otp: string) => {
-    const subject = "รหัส OTP รีเซ็ตรหัสผ่าน — ระบบ กยศ. รส.ล.";
-    const body = `
+  const subject = "รหัส OTP รีเซ็ตรหัสผ่าน — ระบบ กยศ. รส.ล.";
+  const body = `
       <p style="margin:0 0 16px;color:#334155;font-size:14px;line-height:1.7;">
         คุณได้ขอเปลี่ยนรหัสผ่านเพื่อเข้าใช้งานระบบส่งเอกสาร กยศ. กรุณานำรหัสด้านล่างไปกรอกเพื่อตั้งรหัสผ่านใหม่
       </p>
@@ -154,5 +156,6 @@ export const sendPasswordResetOTP = async (to: string, otp: string) => {
       <p style="margin:0 0 4px;color:#64748b;font-size:13px;">รหัสนี้จะหมดอายุภายใน <strong>15 นาที</strong></p>
       <p style="margin:0;color:#94a3b8;font-size:12px;">หากคุณไม่ได้ทำรายการนี้ รหัสผ่านเก่าจะยังคงใช้ได้ตามปกติ</p>
     `;
-    return sendEmail(to, subject, wrapEmailHtml("รีเซ็ตรหัสผ่าน", body));
+  const text = `รหัส OTP รีเซ็ตรหัสผ่านของคุณคือ: ${otp}\nรหัสนี้จะหมดอายุภายใน 15 นาที\nหากคุณไม่ได้ทำรายการนี้ รหัสผ่านเก่าจะยังคงใช้ได้ตามปกติ`;
+  return sendEmail(to, subject, wrapEmailHtml("รีเซ็ตรหัสผ่าน", body), text);
 }

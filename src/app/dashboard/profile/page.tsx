@@ -44,7 +44,7 @@ export default function ProfilePage() {
             const res = await fetch("/api/profile");
             const data = await res.json();
             if (res.ok) {
-                setProfile(data.user);
+                setProfile(data);
             } else {
                 toast.error("ไม่สามารถโหลดข้อมูลโปรไฟล์ได้");
             }

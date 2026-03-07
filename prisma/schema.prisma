@@ -15,6 +15,7 @@ model User {
   studentId       String?       // รหัสนักเรียน (บังคับที่ API level, optional ที่ DB เพราะ admin ไม่มี)
   gradeLevel      String?       // ระดับชั้น (ม.4, ม.5, ม.6)
   idCard          String        @unique // เลขบัตรประจำตัวประชาชน
+  phone           String?       // เบอร์โทรศัพท์
   email           String        @unique // อีเมล
   password        String        // รหัสผ่าน (Hashed)
   borrowerType    BorrowerType  @default(NEW) // ประเภทยืนยัน(รายใหม่/รายเก่า)
@@ -23,6 +24,16 @@ model User {
   otp             String?       // เก็บ OTP ชั่วคราว
   otpExpiry       DateTime?     // เวลาหมดอายุ OTP
   accountStatus   AccountStatus @default(ACTIVE) // สถานะบัญชี(Active/Archived)
+
+  // รูปภาพ (base64)
+  idCardImage     String?       @db.Text // รูปบัตรประชาชน
+  faceImage       String?       @db.Text // รูปใบหน้า (จาก liveness check)
+
+  // ความยินยอม
+  consentParent   Boolean       @default(false) // ผู้ปกครองรับทราบ
+  consentLoan     Boolean       @default(false) // รับทราบค่าครองชีพ
+  consentPdpa     Boolean       @default(false) // ยินยอม PDPA
+
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 

@@ -45,6 +45,7 @@ export async function GET(req: Request) {
                     studentId: true,
                     gradeLevel: true,
                     idCard: true,
+                    phone: true,
                     email: true,
                     borrowerType: true,
                     accountStatus: true,
@@ -171,6 +172,84 @@ export async function PUT(req: Request) {
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {
         console.error("UPDATE_STUDENT_STATUS_ERROR:", error);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    }
+}
+
+// PATCH: แก้ไขข้อมูลนักเรียน
+export async function PATCH(req: Request) {
+    try {
+        const session = await getSession();
+        if (!session || session.role !== 'ADMIN') {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const { id, prefix, firstName, lastName, email, phone, gradeLevel, borrowerType } = await req.json();
+
+        if (!id) {
+            return NextResponse.json({ error: "ต้องระบุ ID นักเรียน" }, { status: 400 });
+        }
+
+        const user = await db.user.findUnique({ where: { id } });
+        if (!user || user.role !== 'STUDENT') {
+            return NextResponse.json({ error: "ไม่พบนักเรียน" }, { status: 404 });
+        }
+
+        // สร้าง update data เฉพาะ field ที่ส่งมา
+        const updateData: Record<string, any> = {};
+        const changes: string[] = [];
+
+        if (prefix !== undefined && prefix !== user.prefix) {
+            updateData.prefix = prefix;
+            changes.push(`คำนำหน้า: ${user.prefix} → ${prefix}`);
+        }
+        if (firstName !== undefined && firstName !== user.firstName) {
+            updateData.firstName = firstName.trim();
+            changes.push(`ชื่อ: ${user.firstName} → ${firstName}`);
+        }
+        if (lastName !== undefined && lastName !== user.lastName) {
+            updateData.lastName = lastName.trim();
+            changes.push(`นามสกุล: ${user.lastName} → ${lastName}`);
+        }
+        if (email !== undefined && email !== user.email) {
+            const existing = await db.user.findFirst({ where: { email, id: { not: id } } });
+            if (existing) return NextResponse.json({ error: "อีเมลนี้มีผู้ใช้อื่นแล้ว" }, { status: 400 });
+            updateData.email = email.trim().toLowerCase();
+            changes.push(`อีเมล: ${user.email} → ${email}`);
+        }
+        if (phone !== undefined && phone !== user.phone) {
+            updateData.phone = phone || null;
+            changes.push(`เบอร์โทร: ${user.phone || '-'} → ${phone || '-'}`);
+        }
+        if (gradeLevel !== undefined && gradeLevel !== user.gradeLevel) {
+            updateData.gradeLevel = gradeLevel;
+            changes.push(`ระดับชั้น: ${user.gradeLevel || '-'} → ${gradeLevel}`);
+        }
+        if (borrowerType !== undefined && borrowerType !== user.borrowerType) {
+            updateData.borrowerType = borrowerType;
+            changes.push(`ประเภทผู้กู้: ${user.borrowerType} → ${borrowerType}`);
+        }
+
+        if (Object.keys(updateData).length === 0) {
+            return NextResponse.json({ error: "ไม่มีข้อมูลที่เปลี่ยนแปลง" }, { status: 400 });
+        }
+
+        await db.user.update({ where: { id }, data: updateData });
+
+        await db.auditLog.create({
+            data: {
+                adminId: session.userId,
+                action: "EDIT_STUDENT",
+                entityType: "USER",
+                entityId: id,
+                details: `แก้ไขข้อมูล ${user.prefix}${user.firstName} ${user.lastName}: ${changes.join(', ')}`,
+            }
+        });
+
+        revalidatePath('/');
+        return NextResponse.json({ success: true }, { status: 200 });
+    } catch (error) {
+        console.error("EDIT_STUDENT_ERROR:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

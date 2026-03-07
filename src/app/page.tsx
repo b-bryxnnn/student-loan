@@ -230,10 +230,10 @@ export default async function Home() {
                 ))}
               </div>
               <div className="flex gap-2 pt-2">
-                <a href="https://apps.apple.com/th/app/กยศ-connect/id1659848498" target="_blank" rel="noopener noreferrer">
+                <a href="https://apps.apple.com/th/app/%E0%B8%81%E0%B8%A2%E0%B8%A8-connect/id1659848498" target="_blank" rel="noopener noreferrer">
                   <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 cursor-pointer text-xs">App Store (iOS)</Badge>
                 </a>
-                <a href="https://play.google.com/store/apps/details?id=th.or.studentloan.connect" target="_blank" rel="noopener noreferrer">
+                <a href="https://play.google.com/store/apps/details?id=th.or.studentloan.studentloan" target="_blank" rel="noopener noreferrer">
                   <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 cursor-pointer text-xs">Google Play (Android)</Badge>
                 </a>
               </div>
@@ -494,7 +494,7 @@ export default async function Home() {
                 <div className="flex items-center gap-3">
                   <Download className="w-5 h-5 text-primary shrink-0" />
                   <div>
-                    <h3 className="font-semibold text-sm">หนังสือให้ความยินยอมเปิดเผยข้อมูล กยศ.102</h3>
+                    <h3 className="font-semibold text-sm">หนังสือรับรองรายได้ผู้กู้ยืม กยศ.102</h3>
                     <p className="text-xs text-muted-foreground">PDF — ดาวน์โหลดจาก studentloan.or.th</p>
                   </div>
                   <ExternalLink className="w-4 h-4 text-muted-foreground ml-auto shrink-0" />

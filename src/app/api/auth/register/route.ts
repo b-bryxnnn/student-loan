@@ -16,8 +16,8 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        console.log("REGISTER body received:", JSON.stringify({ ...body, password: '***' }));
-        const { prefix, firstName, lastName, studentId, idCard, email, password, borrowerType } = body;
+        console.log("REGISTER body received:", JSON.stringify({ ...body, password: '***', idCardImage: body.idCardImage ? '[base64]' : null, faceImage: body.faceImage ? '[base64]' : null }));
+        const { prefix, firstName, lastName, studentId, idCard, phone, email, password, borrowerType, idCardImage, faceImage, consentParent, consentLoan, consentPdpa } = body;
 
         // === Backend Validation ===
         if (!prefix || !firstName || !lastName || !idCard || !email || !password) {
@@ -29,6 +29,11 @@ export async function POST(req: Request) {
             if (!email) missing.push('อีเมล');
             if (!password) missing.push('รหัสผ่าน');
             return NextResponse.json({ error: `กรุณากรอกข้อมูลให้ครบถ้วน: ${missing.join(', ')}` }, { status: 400 });
+        }
+
+        // ตรวจสอบ consent ทั้ง 3 ข้อ
+        if (!consentParent || !consentLoan || !consentPdpa) {
+            return NextResponse.json({ error: "กรุณายินยอมเงื่อนไขทั้ง 3 ข้อก่อนสมัครสมาชิก" }, { status: 400 });
         }
 
         if (typeof firstName !== 'string' || firstName.trim().length < 1 || firstName.length > 100) {
@@ -47,6 +52,11 @@ export async function POST(req: Request) {
         // ตรวจ checksum — เตือนใน log แต่ไม่ block
         if (!validateThaiId(idCard)) {
             console.warn("WARNING: Thai ID checksum failed for:", idCard, "— allowing registration anyway");
+        }
+
+        // ตรวจเบอร์โทร (ถ้ามี)
+        if (phone && !/^0\d{8,9}$/.test(phone)) {
+            return NextResponse.json({ error: "เบอร์โทรศัพท์ไม่ถูกต้อง (เช่น 0812345678)" }, { status: 400 });
         }
 
         if (studentId && (typeof studentId !== 'string' || studentId.trim().length < 1 || studentId.length > 20)) {
@@ -104,6 +114,7 @@ export async function POST(req: Request) {
                 studentId: studentId ? studentId.trim() : null,
                 gradeLevel: body.gradeLevel || null,
                 idCard,
+                phone: phone || null,
                 email: email.trim().toLowerCase(),
                 password: hashedPassword,
                 borrowerType: borrowerType || 'NEW',
@@ -111,6 +122,11 @@ export async function POST(req: Request) {
                 otp,
                 otpExpiry,
                 role: 'STUDENT',
+                idCardImage: idCardImage || null,
+                faceImage: faceImage || null,
+                consentParent: !!consentParent,
+                consentLoan: !!consentLoan,
+                consentPdpa: !!consentPdpa,
             }
         });
 

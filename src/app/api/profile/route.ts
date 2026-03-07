@@ -17,7 +17,9 @@ export async function GET() {
                 firstName: true,
                 lastName: true,
                 studentId: true,
+                gradeLevel: true,
                 idCard: true,
+                phone: true,
                 email: true,
                 borrowerType: true,
                 role: true,
@@ -30,15 +32,7 @@ export async function GET() {
             return NextResponse.json({ error: "ไม่พบผู้ใช้" }, { status: 404 });
         }
 
-        // Mask idCard for security
-        const maskedUser = {
-            ...user,
-            idCard: user.idCard.length >= 6
-                ? user.idCard.slice(0, 3) + '-xxxx-xxx-' + user.idCard.slice(-3)
-                : user.idCard
-        };
-
-        return NextResponse.json({ user: maskedUser }, { status: 200 });
+        return NextResponse.json(user, { status: 200 });
     } catch (error) {
         console.error("PROFILE_GET_ERROR:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

@@ -5,7 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Users, Search, Trash2, Archive, RotateCcw, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Users, Search, Trash2, Archive, RotateCcw, ChevronLeft, ChevronRight, RefreshCw, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
@@ -23,6 +25,7 @@ interface Student {
     studentId: string | null;
     gradeLevel: string | null;
     idCard: string;
+    phone: string | null;
     email: string;
     borrowerType: string;
     accountStatus: string;
@@ -50,6 +53,12 @@ export default function AdminStudentsPage() {
     const [dialogAction, setDialogAction] = useState<"DELETE" | "ARCHIVE" | "RESTORE">("DELETE");
     const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
+
+    // Edit dialog
+    const [editOpen, setEditOpen] = useState(false);
+    const [editStudent, setEditStudent] = useState<Student | null>(null);
+    const [editForm, setEditForm] = useState({ prefix: "", firstName: "", lastName: "", email: "", phone: "", gradeLevel: "", borrowerType: "" });
+    const [editLoading, setEditLoading] = useState(false);
 
     const fetchStudents = useCallback(async (page = 1) => {
         setLoading(true);
@@ -116,6 +125,44 @@ export default function AdminStudentsPage() {
             toast.error("เกิดข้อผิดพลาด");
         } finally {
             setActionLoading(false);
+        }
+    };
+
+    const openEdit = (s: Student) => {
+        setEditStudent(s);
+        setEditForm({
+            prefix: s.prefix,
+            firstName: s.firstName,
+            lastName: s.lastName,
+            email: s.email,
+            phone: s.phone || "",
+            gradeLevel: s.gradeLevel || "",
+            borrowerType: s.borrowerType,
+        });
+        setEditOpen(true);
+    };
+
+    const handleEdit = async () => {
+        if (!editStudent) return;
+        setEditLoading(true);
+        try {
+            const res = await fetch("/api/admin/students", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: editStudent.id, ...editForm }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                toast.success("แก้ไขข้อมูลเรียบร้อยแล้ว");
+                setEditOpen(false);
+                fetchStudents(pagination.page);
+            } else {
+                toast.error(data.error);
+            }
+        } catch {
+            toast.error("เกิดข้อผิดพลาด");
+        } finally {
+            setEditLoading(false);
         }
     };
 
@@ -241,6 +288,9 @@ export default function AdminStudentsPage() {
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center justify-center gap-1">
+                                                <Button variant="ghost" size="icon" className="w-8 h-8 text-primary hover:bg-primary/10" onClick={() => openEdit(s)} title="แก้ไข">
+                                                    <Pencil className="w-4 h-4" />
+                                                </Button>
                                                 {s.accountStatus === 'ACTIVE' ? (
                                                     <Button variant="ghost" size="icon" className="w-8 h-8 text-orange-600 hover:bg-orange-50" onClick={() => openDialog(s, "ARCHIVE")} title="จำหน่ายออก">
                                                         <Archive className="w-4 h-4" />
@@ -295,6 +345,79 @@ export default function AdminStudentsPage() {
                         <Button variant="outline" onClick={() => setDialogOpen(false)}>ยกเลิก</Button>
                         <Button className={dialogLabels[dialogAction].color} onClick={handleAction} disabled={actionLoading}>
                             {actionLoading ? "กำลังดำเนินการ..." : dialogLabels[dialogAction].btn}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Dialog */}
+            <Dialog open={editOpen} onOpenChange={setEditOpen}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>แก้ไขข้อมูลนักเรียน</DialogTitle>
+                        <DialogDescription>แก้ไขข้อมูลแล้วกด "บันทึก" เพื่อยืนยัน</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-2">
+                        <div className="grid grid-cols-3 gap-3">
+                            <div className="space-y-1">
+                                <Label className="text-xs">คำนำหน้า</Label>
+                                <Select value={editForm.prefix} onValueChange={(v) => setEditForm(p => ({ ...p, prefix: v }))}>
+                                    <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="ด.ช.">ด.ช.</SelectItem>
+                                        <SelectItem value="ด.ญ.">ด.ญ.</SelectItem>
+                                        <SelectItem value="นาย">นาย</SelectItem>
+                                        <SelectItem value="นางสาว">นางสาว</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs">ชื่อ</Label>
+                                <Input value={editForm.firstName} onChange={e => setEditForm(p => ({ ...p, firstName: e.target.value }))} className="text-sm" />
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs">นามสกุล</Label>
+                                <Input value={editForm.lastName} onChange={e => setEditForm(p => ({ ...p, lastName: e.target.value }))} className="text-sm" />
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                                <Label className="text-xs">อีเมล</Label>
+                                <Input value={editForm.email} onChange={e => setEditForm(p => ({ ...p, email: e.target.value }))} className="text-sm" />
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs">เบอร์โทร</Label>
+                                <Input value={editForm.phone} onChange={e => setEditForm(p => ({ ...p, phone: e.target.value }))} className="text-sm" placeholder="0812345678" />
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                                <Label className="text-xs">ระดับชั้น</Label>
+                                <Select value={editForm.gradeLevel} onValueChange={(v) => setEditForm(p => ({ ...p, gradeLevel: v }))}>
+                                    <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="ม.4">ม.4</SelectItem>
+                                        <SelectItem value="ม.5">ม.5</SelectItem>
+                                        <SelectItem value="ม.6">ม.6</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs">ประเภทผู้กู้</Label>
+                                <Select value={editForm.borrowerType} onValueChange={(v) => setEditForm(p => ({ ...p, borrowerType: v }))}>
+                                    <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="NEW">รายใหม่</SelectItem>
+                                        <SelectItem value="OLD">รายเก่า</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    </div>
+                    <DialogFooter className="gap-2">
+                        <Button variant="outline" onClick={() => setEditOpen(false)}>ยกเลิก</Button>
+                        <Button onClick={handleEdit} disabled={editLoading}>
+                            {editLoading ? "กำลังบันทึก..." : "บันทึกการแก้ไข"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

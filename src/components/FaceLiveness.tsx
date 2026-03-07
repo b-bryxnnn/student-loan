@@ -160,9 +160,9 @@ export default function FaceLiveness({ onComplete }: FaceLivenessProps) {
                 const rightDist = rightEye.x - nose.x;
                 const ratio = leftDist / rightDist;
 
-                let isLeft = ratio > 2.0;    // Nose is much closer to right eye (user turned head right, but mirror makes it look leftish)
-                let isRight = ratio < 0.5;   // Nose is much closer to left eye
-                let isCenter = ratio > 0.8 && ratio < 1.3;
+                let isLeft = ratio > 1.4;    // Nose is close to right eye (user turned head right, but mirror makes it look leftish)
+                let isRight = ratio < 0.7;   // Nose is close to left eye
+                let isCenter = ratio > 0.6 && ratio < 1.4;
 
                 // Also require head to be relatively straight for center
 
@@ -179,7 +179,7 @@ export default function FaceLiveness({ onComplete }: FaceLivenessProps) {
                     setProgressStatus("เยี่ยมมาก! กรุณาค้างไว้...");
 
                     // Small delay to prevent accidental fast passes
-                    await new Promise(r => setTimeout(r, 600));
+                    await new Promise(r => setTimeout(r, 300));
 
                     const newCompleted = [...completedRef.current];
                     newCompleted[stepToMark] = true;

@@ -131,15 +131,13 @@ export async function POST(req: Request) {
             }
         });
 
-        // 5. ส่ง OTP Email แบบ fire-and-forget (ไม่รอให้ส่งเสร็จ → UX เร็วขึ้น)
-        // ถ้าส่งไม่ได้ ผู้ใช้สามารถกด "ขอ OTP ใหม่" ได้
-        sendOTPEmail(email, otp).then(sent => {
-            if (!sent) {
-                console.warn(`⚠️ ส่ง OTP email ไม่สำเร็จไปยัง ${email} — ผู้ใช้สามารถกดขอ OTP ใหม่ได้`);
-            }
-        }).catch(err => {
-            console.error(`❌ OTP email error for ${email}:`, err);
-        });
+        // 5. ส่ง OTP Email (บังคับรอให้ส่งเสร็จ เพื่อให้แน่ใจว่าผู้ใช้ได้รับ)
+        const emailSent = await sendOTPEmail(email, otp);
+        if (!emailSent) {
+            // ถ้าส่งอีเมลไม่สำเร็จ ให้ลบ user ที่สร้างชั่วคราวทิ้ง (หรือจะเก็บไว้ก็ระวังขยะ)
+            await db.user.delete({ where: { id: user.id } });
+            return NextResponse.json({ error: "ไม่สามารถส่งอีเมล OTP ได้ กรุณาตรวจสอบอีเมลหรือตั้งค่าระบบอีเมลให้ถูกต้อง" }, { status: 500 });
+        }
 
         return NextResponse.json({ success: true, userId: user.id }, { status: 201 });
 

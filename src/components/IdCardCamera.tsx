@@ -21,9 +21,27 @@ export default function IdCardCamera({ onCapture, onCancel }: IdCardCameraProps)
         try {
             setCameraError("");
             const mediaStream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } },
+                video: {
+                    facingMode: "environment",
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 }
+                },
                 audio: false,
             });
+
+            // Try to set zoom to 1x to avoid 0.5x ultra-wide lens
+            const track = mediaStream.getVideoTracks()[0];
+            const capabilities = track.getCapabilities ? track.getCapabilities() : null;
+            if (capabilities && (capabilities as any).zoom) {
+                try {
+                    await track.applyConstraints({
+                        advanced: [{ zoom: 1 }] as any
+                    });
+                } catch (e) {
+                    console.log("Zoom constraint not supported", e);
+                }
+            }
+
             setStream(mediaStream);
             if (videoRef.current) {
                 videoRef.current.srcObject = mediaStream;

@@ -88,23 +88,26 @@ export default function FaceLiveness({ onComplete }: FaceLivenessProps) {
                 audio: false,
             });
             setStream(mediaStream);
-            if (videoRef.current) {
-                videoRef.current.srcObject = mediaStream;
-                videoRef.current.onloadeddata = async () => {
-                    try {
-                        await videoRef.current?.play();
-                        startDetection();
-                    } catch (e) {
-                        console.error("Video play failed", e);
-                        setError("เกิดข้อผิดพลาดในการเปิดกล้อง");
-                    }
-                };
-            }
         } catch (err) {
             console.error(err);
             setError("ไม่สามารถเปิดกล้องได้ กรุณาให้สิทธิ์เข้าถึงหรือใช้เบราว์เซอร์อื่น");
         }
     }, [modelsLoaded]);
+
+    useEffect(() => {
+        if (stream && videoRef.current && !videoRef.current.srcObject) {
+            videoRef.current.srcObject = stream;
+            videoRef.current.onloadeddata = async () => {
+                try {
+                    await videoRef.current?.play();
+                    startDetection();
+                } catch (e) {
+                    console.error("Video play failed", e);
+                    setError("เกิดข้อผิดพลาดในการเปิดกล้อง");
+                }
+            };
+        }
+    }, [stream, videoRef.current]); // Reacting to stream change
 
     const stopCamera = useCallback(() => {
         setDetecting(false);

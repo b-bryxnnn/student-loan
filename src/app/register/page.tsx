@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { AlertCircle, CheckCircle2, UserPlus, ShieldCheck, Camera, CreditCard, FileCheck, ChevronRight, ChevronLeft, Upload, ScrollText, Loader2 } from "lucide-react";
 import { validateThaiId } from "@/lib/validateThaiId";
 import FaceLiveness from "@/components/FaceLiveness";
+import IdCardCamera from "@/components/IdCardCamera";
 import { createWorker } from 'tesseract.js';
 
 // ====== PDPA agreement text ======
@@ -53,9 +54,8 @@ export default function RegisterPage() {
     const [step, setStep] = useState(1); // 1=id 2=info 3=face 4=consent 5=otp
     const [loading, setLoading] = useState(false);
     const [isOcrProcessing, setIsOcrProcessing] = useState(false);
+    const [isIdCameraOpen, setIsIdCameraOpen] = useState(false);
     const idCardInputRef = useRef<HTMLInputElement>(null);
-
-    // Form Data
     const [formData, setFormData] = useState({
         prefix: "",
         firstName: "",
@@ -109,6 +109,53 @@ export default function RegisterPage() {
     };
 
     // ====== ID Card Photo & OCR ======
+    const processOcr = async (base64: string) => {
+        setIsOcrProcessing(true);
+        setIsIdCameraOpen(false);
+        toast.info("กำลังดึงข้อมูลจากบัตร โปรดรอสักครู่...", { duration: 5000 });
+        try {
+            const worker = await createWorker('tha+eng');
+            const ret = await worker.recognize(base64);
+            const text = ret.data.text;
+            await worker.terminate();
+
+            const idCardMatch = text.match(/\b[1-9]\s?\d{4}\s?\d{5}\s?\d{2}\s?\d\b/);
+            const idCardNumber = idCardMatch ? idCardMatch[0].replace(/\s+/g, '') : '';
+
+            let prefix = '';
+            let firstName = '';
+            let lastName = '';
+
+            const thaiNameRegex = /(นาย|นางสาว|นาง|ด\.ช\.|ด\.ญ\.)\s*([ก-๙]+)\s+([ก-๙]+)/;
+            const nameMatch = text.match(thaiNameRegex);
+
+            if (nameMatch) {
+                prefix = nameMatch[1];
+                firstName = nameMatch[2];
+                lastName = nameMatch[3];
+            }
+
+            if (idCardNumber || firstName) {
+                if (idCardNumber) handleIdCardChange({ target: { value: idCardNumber } } as any);
+                if (prefix) handleSelectChange('prefix', prefix);
+                if (firstName) handleChange({ target: { name: 'firstName', value: firstName } } as any);
+                if (lastName) handleChange({ target: { name: 'lastName', value: lastName } } as any);
+
+                toast.success("ดึงข้อมูลจากบัตรสำเร็จ กรุณาตรวจสอบความถูกต้อง");
+                setTimeout(() => setStep(2), 1500); // Auto go to next step
+            } else {
+                toast.error("อ่านข้อมูลไม่สำเร็จ กรุณากรอกข้อมูลด้วยตนเอง");
+                setTimeout(() => setStep(2), 1500); // Auto go to next step anyway
+            }
+        } catch (err) {
+            console.error("OCR Error:", err);
+            toast.error("เกิดข้อผิดพลาดในการดึงข้อมูล กรุณากรอกด้วยตนเอง");
+            setTimeout(() => setStep(2), 1500); // Auto go to next step anyway
+        } finally {
+            setIsOcrProcessing(false);
+        }
+    };
+
     const handleIdCardPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -125,53 +172,14 @@ export default function RegisterPage() {
         reader.onload = async () => {
             const base64 = reader.result as string;
             setIdCardImage(base64);
-
-            // Auto OCR Processing
-            setIsOcrProcessing(true);
-            toast.info("กำลังดึงข้อมูลจากบัตร โปรดรอสักครู่...", { duration: 5000 });
-            try {
-                const worker = await createWorker('tha+eng');
-                const ret = await worker.recognize(base64);
-                const text = ret.data.text;
-                await worker.terminate();
-
-                const idCardMatch = text.match(/\b[1-9]\s?\d{4}\s?\d{5}\s?\d{2}\s?\d\b/);
-                const idCardNumber = idCardMatch ? idCardMatch[0].replace(/\s+/g, '') : '';
-
-                let prefix = '';
-                let firstName = '';
-                let lastName = '';
-
-                const thaiNameRegex = /(นาย|นางสาว|นาง|ด\.ช\.|ด\.ญ\.)\s*([ก-๙]+)\s+([ก-๙]+)/;
-                const nameMatch = text.match(thaiNameRegex);
-
-                if (nameMatch) {
-                    prefix = nameMatch[1];
-                    firstName = nameMatch[2];
-                    lastName = nameMatch[3];
-                }
-
-                if (idCardNumber || firstName) {
-                    if (idCardNumber) handleIdCardChange({ target: { value: idCardNumber } } as any);
-                    if (prefix) handleSelectChange('prefix', prefix);
-                    if (firstName) handleChange({ target: { name: 'firstName', value: firstName } } as any);
-                    if (lastName) handleChange({ target: { name: 'lastName', value: lastName } } as any);
-
-                    toast.success("ดึงข้อมูลจากบัตรสำเร็จ กรุณาตรวจสอบความถูกต้อง");
-                    setTimeout(() => setStep(2), 1500); // Auto go to next step
-                } else {
-                    toast.error("อ่านข้อมูลไม่สำเร็จ กรุณากรอกข้อมูลด้วยตนเอง");
-                    setTimeout(() => setStep(2), 1500); // Auto go to next step anyway
-                }
-            } catch (err) {
-                console.error("OCR Error:", err);
-                toast.error("เกิดข้อผิดพลาดในการดึงข้อมูล กรุณากรอกด้วยตนเอง");
-                setTimeout(() => setStep(2), 1500); // Auto go to next step anyway
-            } finally {
-                setIsOcrProcessing(false);
-            }
+            await processOcr(base64);
         };
         reader.readAsDataURL(file);
+    };
+
+    const handleIdCardCapture = async (base64: string) => {
+        setIdCardImage(base64);
+        await processOcr(base64);
     };
 
     // ====== Validation ======
@@ -329,7 +337,12 @@ export default function RegisterPage() {
                                 </div>
                                 <p className="text-xs text-muted-foreground">ถ่ายรูปด้านหน้าบัตรให้ชัดเจน เห็นข้อมูลครบถ้วน (JPG/PNG ไม่เกิน 5MB)</p>
 
-                                {idCardImage ? (
+                                {isIdCameraOpen ? (
+                                    <IdCardCamera
+                                        onCapture={handleIdCardCapture}
+                                        onCancel={() => setIsIdCameraOpen(false)}
+                                    />
+                                ) : idCardImage ? (
                                     <div className="space-y-4">
                                         <div className="relative rounded-lg overflow-hidden border border-primary/20 max-w-sm mx-auto">
                                             <img src={idCardImage} alt="บัตรประชาชน" className="w-full h-auto opacity-70" />
@@ -341,29 +354,52 @@ export default function RegisterPage() {
                                             )}
                                         </div>
                                         <div className="flex flex-col items-center gap-3">
-                                            <Button variant="ghost" size="sm" onClick={() => { setIdCardImage(null); if (idCardInputRef.current) idCardInputRef.current.value = ""; }} className="text-xs" disabled={isOcrProcessing}>
-                                                ถ่ายรูปบัตรใหม่
+                                            <div className="flex gap-2 w-full max-w-sm">
+                                                <Button variant="outline" className="flex-1 text-xs" onClick={() => setIsIdCameraOpen(true)} disabled={isOcrProcessing}>
+                                                    <Camera className="w-3 h-3 mr-1" /> ถ่ายจากกล้อง
+                                                </Button>
+                                                <Button variant="outline" className="flex-1 text-xs" onClick={() => idCardInputRef.current?.click()} disabled={isOcrProcessing}>
+                                                    <Upload className="w-3 h-3 mr-1" /> เปลี่ยนรูป
+                                                </Button>
+                                            </div>
+                                            <Button variant="ghost" size="sm" onClick={() => { setIdCardImage(null); if (idCardInputRef.current) idCardInputRef.current.value = ""; }} className="text-xs text-destructive" disabled={isOcrProcessing}>
+                                                ลบรูปนี้
                                             </Button>
                                         </div>
                                     </div>
                                 ) : (
-                                    <div
-                                        className="border-2 border-dashed border-primary/20 rounded-lg p-6 text-center cursor-pointer hover:border-primary/40 transition-colors"
-                                        onClick={() => idCardInputRef.current?.click()}
-                                    >
-                                        <Upload className="w-8 h-8 text-primary/40 mx-auto mb-2" />
-                                        <p className="text-sm text-muted-foreground">คลิกเพื่ออัปโหลดหรือถ่ายรูประบบจะช่วยกรอกข้อมูลอัตโนมัติ</p>
+                                    <div className="flex flex-col gap-3 max-w-sm mx-auto">
+                                        <div
+                                            className="border-2 border-dashed border-primary/20 rounded-lg p-6 text-center cursor-pointer hover:border-primary/40 transition-colors flex flex-col items-center gap-2"
+                                            onClick={() => setIsIdCameraOpen(true)}
+                                        >
+                                            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                                <Camera className="w-6 h-6" />
+                                            </div>
+                                            <p className="text-sm font-semibold">ถ่ายจากกล้องตอนนี้</p>
+                                            <p className="text-[10px] text-muted-foreground px-4 text-center">ระบบจะช่วยดึงข้อมูลจากภาพอัตโนมัติ (แนะนำ)</p>
+                                        </div>
+
+                                        <div className="relative py-2 flex items-center">
+                                            <div className="flex-grow border-t border-muted"></div>
+                                            <span className="flex-shrink-0 mx-4 text-muted-foreground text-xs">หรือ</span>
+                                            <div className="flex-grow border-t border-muted"></div>
+                                        </div>
+
+                                        <Button variant="outline" className="w-full shadow-sm text-xs" onClick={() => idCardInputRef.current?.click()}>
+                                            <Upload className="w-4 h-4 mr-2" /> อัปโหลดจากอัลบั้ม
+                                        </Button>
                                     </div>
                                 )}
-                                <input
-                                    ref={idCardInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    capture="environment"
-                                    onChange={handleIdCardPhoto}
-                                    className="hidden"
-                                />
                             </div>
+                            <input
+                                ref={idCardInputRef}
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                onChange={handleIdCardPhoto}
+                                className="hidden"
+                            />
                         </CardContent>
                         <CardFooter className="flex flex-col space-y-3 border-t border-border/50 pt-5">
                             <Button type="button" size="lg" className="w-full text-sm font-semibold shadow-md shadow-primary/20" onClick={goNext} disabled={isOcrProcessing}>
@@ -377,237 +413,243 @@ export default function RegisterPage() {
                 )}
 
                 {/* ====================== STEP 2: Personal Info ====================== */}
-                {step === 2 && (
-                    <>
-                        <CardHeader className="text-center space-y-1 pb-3 border-b border-border/50">
-                            <CardTitle className="text-xl font-bold tracking-tight">ข้อมูลส่วนตัว</CardTitle>
-                            <CardDescription className="text-xs">กรอกข้อมูลให้ครบถ้วนและถูกต้องตามจริง</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4 pt-5">
-                            {/* Prefix + Name */}
-                            <div className="grid grid-cols-3 gap-3">
+                {
+                    step === 2 && (
+                        <>
+                            <CardHeader className="text-center space-y-1 pb-3 border-b border-border/50">
+                                <CardTitle className="text-xl font-bold tracking-tight">ข้อมูลส่วนตัว</CardTitle>
+                                <CardDescription className="text-xs">กรอกข้อมูลให้ครบถ้วนและถูกต้องตามจริง</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4 pt-5">
+                                {/* Prefix + Name */}
+                                <div className="grid grid-cols-3 gap-3">
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs">คำนำหน้า <span className="text-destructive">*</span></Label>
+                                        <Select onValueChange={(v) => handleSelectChange('prefix', v)} value={formData.prefix || undefined}>
+                                            <SelectTrigger className={`bg-white text-sm ${errors.prefix ? 'border-destructive' : ''}`}>
+                                                <SelectValue placeholder="เลือก" />
+                                            </SelectTrigger>
+                                            <SelectContent position="popper" sideOffset={4}>
+                                                <SelectItem value="ด.ช.">ด.ช.</SelectItem>
+                                                <SelectItem value="ด.ญ.">ด.ญ.</SelectItem>
+                                                <SelectItem value="นาย">นาย</SelectItem>
+                                                <SelectItem value="นางสาว">นางสาว</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FieldError field="prefix" />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="firstName" className="text-xs">ชื่อ <span className="text-destructive">*</span></Label>
+                                        <Input id="firstName" name="firstName" value={formData.firstName} onChange={handleChange} className={`bg-white text-sm ${errors.firstName ? 'border-destructive' : ''}`} placeholder="ชื่อ" />
+                                        <FieldError field="firstName" />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="lastName" className="text-xs">นามสกุล <span className="text-destructive">*</span></Label>
+                                        <Input id="lastName" name="lastName" value={formData.lastName} onChange={handleChange} className={`bg-white text-sm ${errors.lastName ? 'border-destructive' : ''}`} placeholder="นามสกุล" />
+                                        <FieldError field="lastName" />
+                                    </div>
+                                </div>
+
+                                {/* Student ID + Grade */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="studentId" className="text-xs">เลขประจำตัวนักเรียน <span className="text-destructive">*</span></Label>
+                                        <Input id="studentId" name="studentId" value={formData.studentId} onChange={handleChange} className={`bg-white text-sm ${errors.studentId ? 'border-destructive' : ''}`} placeholder="เช่น 12345" />
+                                        <FieldError field="studentId" />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs">ระดับชั้น <span className="text-destructive">*</span></Label>
+                                        <Select onValueChange={(v) => handleSelectChange('gradeLevel', v)} value={formData.gradeLevel || undefined}>
+                                            <SelectTrigger className={`bg-white text-sm ${errors.gradeLevel ? 'border-destructive' : ''}`}>
+                                                <SelectValue placeholder="เลือกระดับชั้น" />
+                                            </SelectTrigger>
+                                            <SelectContent position="popper" sideOffset={4}>
+                                                <SelectItem value="ม.4">มัธยมศึกษาปีที่ 4 (ม.4)</SelectItem>
+                                                <SelectItem value="ม.5">มัธยมศึกษาปีที่ 5 (ม.5)</SelectItem>
+                                                <SelectItem value="ม.6">มัธยมศึกษาปีที่ 6 (ม.6)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FieldError field="gradeLevel" />
+                                    </div>
+                                </div>
+
+                                {/* ID Card + Phone */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="idCard" className="text-xs">เลขประจำตัวประชาชน <span className="text-destructive">*</span></Label>
+                                        <Input
+                                            id="idCard" name="idCard" value={formData.idCard}
+                                            onChange={handleIdCardChange} maxLength={13} inputMode="numeric"
+                                            className={`bg-white font-mono tracking-wider text-sm ${errors.idCard ? 'border-destructive' : ''}`}
+                                            placeholder="ตัวเลข 13 หลัก"
+                                        />
+                                        {errors.idCard ? <FieldError field="idCard" /> : formData.idCard.length === 13 && validateThaiId(formData.idCard) ? (
+                                            <p className="text-xs text-success flex items-center gap-1 mt-1"><CheckCircle2 className="w-3 h-3" /> เลขบัตรถูกต้อง</p>
+                                        ) : (
+                                            <p className="text-[10px] text-muted-foreground">ระบบจะตรวจสอบอัตโนมัติ</p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="phone" className="text-xs">เบอร์โทรศัพท์ <span className="text-destructive">*</span></Label>
+                                        <Input
+                                            id="phone" name="phone" value={formData.phone}
+                                            onChange={handlePhoneChange} maxLength={10} inputMode="numeric"
+                                            className={`bg-white text-sm ${errors.phone ? 'border-destructive' : ''}`} placeholder="0812345678"
+                                        />
+                                        <FieldError field="phone" />
+                                    </div>
+                                </div>
+
+                                {/* Email */}
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs">คำนำหน้า <span className="text-destructive">*</span></Label>
-                                    <Select onValueChange={(v) => handleSelectChange('prefix', v)} value={formData.prefix || undefined}>
-                                        <SelectTrigger className={`bg-white text-sm ${errors.prefix ? 'border-destructive' : ''}`}>
-                                            <SelectValue placeholder="เลือก" />
+                                    <Label htmlFor="email" className="text-xs">อีเมล (สำหรับรับ OTP) <span className="text-destructive">*</span></Label>
+                                    <Input type="email" id="email" name="email" value={formData.email} onChange={handleChange} className={`bg-white text-sm ${errors.email ? 'border-destructive' : ''}`} placeholder="example@gmail.com" />
+                                    <FieldError field="email" />
+                                </div>
+
+                                {/* Password */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="password" className="text-xs">รหัสผ่าน <span className="text-destructive">*</span></Label>
+                                        <Input type="password" id="password" name="password" value={formData.password} onChange={handleChange} className={`bg-white text-sm ${errors.password ? 'border-destructive' : ''}`} />
+                                        {errors.password ? <FieldError field="password" /> : <p className="text-[10px] text-muted-foreground">อย่างน้อย 8 ตัวอักษร</p>}
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="confirmPassword" className="text-xs">ยืนยันรหัสผ่าน <span className="text-destructive">*</span></Label>
+                                        <Input type="password" id="confirmPassword" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} className={`bg-white text-sm ${errors.confirmPassword ? 'border-destructive' : ''}`} />
+                                        <FieldError field="confirmPassword" />
+                                    </div>
+                                </div>
+
+                                {/* Borrower Type */}
+                                <div className="bg-muted/30 p-3 sm:p-4 rounded-lg border border-border/50">
+                                    <Label className="text-xs sm:text-sm mb-2 block font-semibold">สถานะผู้กู้ยืม</Label>
+                                    <Select onValueChange={(v) => handleSelectChange('borrowerType', v)} defaultValue="NEW">
+                                        <SelectTrigger className="bg-white text-sm">
+                                            <SelectValue placeholder="เลือกประเภท..." />
                                         </SelectTrigger>
                                         <SelectContent position="popper" sideOffset={4}>
-                                            <SelectItem value="ด.ช.">ด.ช.</SelectItem>
-                                            <SelectItem value="ด.ญ.">ด.ญ.</SelectItem>
-                                            <SelectItem value="นาย">นาย</SelectItem>
-                                            <SelectItem value="นางสาว">นางสาว</SelectItem>
+                                            <SelectItem value="NEW">ผู้กู้รายใหม่ (ยังไม่เคยกู้ กยศ. มาก่อน)</SelectItem>
+                                            <SelectItem value="OLD">ผู้กู้รายเก่า (เคยกู้ กยศ. มาก่อนแล้ว)</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    <FieldError field="prefix" />
                                 </div>
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="firstName" className="text-xs">ชื่อ <span className="text-destructive">*</span></Label>
-                                    <Input id="firstName" name="firstName" value={formData.firstName} onChange={handleChange} className={`bg-white text-sm ${errors.firstName ? 'border-destructive' : ''}`} placeholder="ชื่อ" />
-                                    <FieldError field="firstName" />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="lastName" className="text-xs">นามสกุล <span className="text-destructive">*</span></Label>
-                                    <Input id="lastName" name="lastName" value={formData.lastName} onChange={handleChange} className={`bg-white text-sm ${errors.lastName ? 'border-destructive' : ''}`} placeholder="นามสกุล" />
-                                    <FieldError field="lastName" />
-                                </div>
-                            </div>
-
-                            {/* Student ID + Grade */}
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="studentId" className="text-xs">เลขประจำตัวนักเรียน <span className="text-destructive">*</span></Label>
-                                    <Input id="studentId" name="studentId" value={formData.studentId} onChange={handleChange} className={`bg-white text-sm ${errors.studentId ? 'border-destructive' : ''}`} placeholder="เช่น 12345" />
-                                    <FieldError field="studentId" />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs">ระดับชั้น <span className="text-destructive">*</span></Label>
-                                    <Select onValueChange={(v) => handleSelectChange('gradeLevel', v)} value={formData.gradeLevel || undefined}>
-                                        <SelectTrigger className={`bg-white text-sm ${errors.gradeLevel ? 'border-destructive' : ''}`}>
-                                            <SelectValue placeholder="เลือกระดับชั้น" />
-                                        </SelectTrigger>
-                                        <SelectContent position="popper" sideOffset={4}>
-                                            <SelectItem value="ม.4">มัธยมศึกษาปีที่ 4 (ม.4)</SelectItem>
-                                            <SelectItem value="ม.5">มัธยมศึกษาปีที่ 5 (ม.5)</SelectItem>
-                                            <SelectItem value="ม.6">มัธยมศึกษาปีที่ 6 (ม.6)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <FieldError field="gradeLevel" />
-                                </div>
-                            </div>
-
-                            {/* ID Card + Phone */}
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="idCard" className="text-xs">เลขประจำตัวประชาชน <span className="text-destructive">*</span></Label>
-                                    <Input
-                                        id="idCard" name="idCard" value={formData.idCard}
-                                        onChange={handleIdCardChange} maxLength={13} inputMode="numeric"
-                                        className={`bg-white font-mono tracking-wider text-sm ${errors.idCard ? 'border-destructive' : ''}`}
-                                        placeholder="ตัวเลข 13 หลัก"
-                                    />
-                                    {errors.idCard ? <FieldError field="idCard" /> : formData.idCard.length === 13 && validateThaiId(formData.idCard) ? (
-                                        <p className="text-xs text-success flex items-center gap-1 mt-1"><CheckCircle2 className="w-3 h-3" /> เลขบัตรถูกต้อง</p>
-                                    ) : (
-                                        <p className="text-[10px] text-muted-foreground">ระบบจะตรวจสอบอัตโนมัติ</p>
-                                    )}
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="phone" className="text-xs">เบอร์โทรศัพท์ <span className="text-destructive">*</span></Label>
-                                    <Input
-                                        id="phone" name="phone" value={formData.phone}
-                                        onChange={handlePhoneChange} maxLength={10} inputMode="numeric"
-                                        className={`bg-white text-sm ${errors.phone ? 'border-destructive' : ''}`} placeholder="0812345678"
-                                    />
-                                    <FieldError field="phone" />
-                                </div>
-                            </div>
-
-                            {/* Email */}
-                            <div className="space-y-1.5">
-                                <Label htmlFor="email" className="text-xs">อีเมล (สำหรับรับ OTP) <span className="text-destructive">*</span></Label>
-                                <Input type="email" id="email" name="email" value={formData.email} onChange={handleChange} className={`bg-white text-sm ${errors.email ? 'border-destructive' : ''}`} placeholder="example@gmail.com" />
-                                <FieldError field="email" />
-                            </div>
-
-                            {/* Password */}
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="password" className="text-xs">รหัสผ่าน <span className="text-destructive">*</span></Label>
-                                    <Input type="password" id="password" name="password" value={formData.password} onChange={handleChange} className={`bg-white text-sm ${errors.password ? 'border-destructive' : ''}`} />
-                                    {errors.password ? <FieldError field="password" /> : <p className="text-[10px] text-muted-foreground">อย่างน้อย 8 ตัวอักษร</p>}
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="confirmPassword" className="text-xs">ยืนยันรหัสผ่าน <span className="text-destructive">*</span></Label>
-                                    <Input type="password" id="confirmPassword" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} className={`bg-white text-sm ${errors.confirmPassword ? 'border-destructive' : ''}`} />
-                                    <FieldError field="confirmPassword" />
-                                </div>
-                            </div>
-
-                            {/* Borrower Type */}
-                            <div className="bg-muted/30 p-3 sm:p-4 rounded-lg border border-border/50">
-                                <Label className="text-xs sm:text-sm mb-2 block font-semibold">สถานะผู้กู้ยืม</Label>
-                                <Select onValueChange={(v) => handleSelectChange('borrowerType', v)} defaultValue="NEW">
-                                    <SelectTrigger className="bg-white text-sm">
-                                        <SelectValue placeholder="เลือกประเภท..." />
-                                    </SelectTrigger>
-                                    <SelectContent position="popper" sideOffset={4}>
-                                        <SelectItem value="NEW">ผู้กู้รายใหม่ (ยังไม่เคยกู้ กยศ. มาก่อน)</SelectItem>
-                                        <SelectItem value="OLD">ผู้กู้รายเก่า (เคยกู้ กยศ. มาก่อนแล้ว)</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </CardContent>
-                        <CardFooter className="flex gap-2 border-t border-border/50 pt-5">
-                            <Button variant="outline" onClick={goBack} className="flex-1">
-                                <ChevronLeft className="w-4 h-4 mr-1" /> ย้อนกลับ
-                            </Button>
-                            <Button type="button" onClick={goNext} className="flex-1 shadow-md shadow-primary/20">
-                                ถัดไป — ยืนยันตัวตน <ChevronRight className="w-4 h-4 ml-1" />
-                            </Button>
-                        </CardFooter>
-                    </>
-                )}
+                            </CardContent>
+                            <CardFooter className="flex gap-2 border-t border-border/50 pt-5">
+                                <Button variant="outline" onClick={goBack} className="flex-1">
+                                    <ChevronLeft className="w-4 h-4 mr-1" /> ย้อนกลับ
+                                </Button>
+                                <Button type="button" onClick={goNext} className="flex-1 shadow-md shadow-primary/20">
+                                    ถัดไป — ยืนยันตัวตน <ChevronRight className="w-4 h-4 ml-1" />
+                                </Button>
+                            </CardFooter>
+                        </>
+                    )
+                }
 
                 {/* ====================== STEP 3: Face Liveness ====================== */}
-                {step === 3 && (
-                    <>
-                        <CardHeader className="text-center space-y-1 pb-3 border-b border-border/50">
-                            <CardTitle className="text-xl font-bold tracking-tight">สแกนใบหน้า</CardTitle>
-                            <CardDescription className="text-xs">สแกนใบหน้าเพื่อยืนยันตัวตน ป้องกันการสวมรอย</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6 pt-5">
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-2 text-sm font-semibold">
-                                    <Camera className="w-4 h-4 text-primary" />
-                                    ถ่ายภาพใบหน้า <span className="text-destructive">*</span>
+                {
+                    step === 3 && (
+                        <>
+                            <CardHeader className="text-center space-y-1 pb-3 border-b border-border/50">
+                                <CardTitle className="text-xl font-bold tracking-tight">สแกนใบหน้า</CardTitle>
+                                <CardDescription className="text-xs">สแกนใบหน้าเพื่อยืนยันตัวตน ป้องกันการสวมรอย</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6 pt-5">
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2 text-sm font-semibold">
+                                        <Camera className="w-4 h-4 text-primary" />
+                                        ถ่ายภาพใบหน้า <span className="text-destructive">*</span>
+                                    </div>
+                                    <FaceLiveness
+                                        onComplete={(img) => setFaceImage(img)}
+                                    />
                                 </div>
-                                <FaceLiveness
-                                    onComplete={(img) => setFaceImage(img)}
-                                />
-                            </div>
-                        </CardContent>
-                        <CardFooter className="flex gap-2 border-t border-border/50 pt-5">
-                            <Button variant="outline" onClick={goBack} className="flex-1">
-                                <ChevronLeft className="w-4 h-4 mr-1" /> ย้อนกลับ
-                            </Button>
-                            <Button onClick={goNext} className="flex-1 shadow-md shadow-primary/20">
-                                ถัดไป — เงื่อนไข <ChevronRight className="w-4 h-4 ml-1" />
-                            </Button>
-                        </CardFooter>
-                    </>
-                )}
+                            </CardContent>
+                            <CardFooter className="flex gap-2 border-t border-border/50 pt-5">
+                                <Button variant="outline" onClick={goBack} className="flex-1">
+                                    <ChevronLeft className="w-4 h-4 mr-1" /> ย้อนกลับ
+                                </Button>
+                                <Button onClick={goNext} className="flex-1 shadow-md shadow-primary/20">
+                                    ถัดไป — เงื่อนไข <ChevronRight className="w-4 h-4 ml-1" />
+                                </Button>
+                            </CardFooter>
+                        </>
+                    )
+                }
 
                 {/* ====================== STEP 4: Consent ====================== */}
-                {step === 4 && (
-                    <>
-                        <CardHeader className="text-center space-y-1 pb-3 border-b border-border/50">
-                            <CardTitle className="text-xl font-bold tracking-tight">ข้อตกลงและเงื่อนไข</CardTitle>
-                            <CardDescription className="text-xs">กรุณาอ่านและยอมรับเงื่อนไขทั้ง 3 ข้อ จึงจะสามารถดำเนินการต่อได้</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-5 pt-5">
+                {
+                    step === 4 && (
+                        <>
+                            <CardHeader className="text-center space-y-1 pb-3 border-b border-border/50">
+                                <CardTitle className="text-xl font-bold tracking-tight">ข้อตกลงและเงื่อนไข</CardTitle>
+                                <CardDescription className="text-xs">กรุณาอ่านและยอมรับเงื่อนไขทั้ง 3 ข้อ จึงจะสามารถดำเนินการต่อได้</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-5 pt-5">
 
-                            {/* Consent 1: Parent */}
-                            <div className="flex items-start space-x-3 bg-muted/30 p-3 sm:p-4 rounded-lg border border-border/50">
-                                <Checkbox id="consent1" checked={consentParent} onCheckedChange={(v) => setConsentParent(!!v)} className="mt-0.5" />
-                                <div className="space-y-1">
-                                    <label htmlFor="consent1" className="text-sm font-semibold cursor-pointer leading-tight">
-                                        ผู้ปกครองรับทราบและอนุญาตแล้ว
-                                    </label>
-                                    <p className="text-xs text-muted-foreground leading-relaxed">
-                                        ข้าพเจ้ายืนยันว่าบิดา มารดา หรือผู้ปกครองตามกฎหมายของข้าพเจ้า ได้รับทราบและอนุญาตให้ข้าพเจ้าดำเนินการยื่นคำขอกู้ยืมเงินจากกองทุนเงินให้กู้ยืมเพื่อการศึกษา (กยศ.) แล้ว
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Consent 2: Loan amount */}
-                            <div className="flex items-start space-x-3 bg-muted/30 p-3 sm:p-4 rounded-lg border border-border/50">
-                                <Checkbox id="consent2" checked={consentLoan} onCheckedChange={(v) => setConsentLoan(!!v)} className="mt-0.5" />
-                                <div className="space-y-1">
-                                    <label htmlFor="consent2" className="text-sm font-semibold cursor-pointer leading-tight">
-                                        รับทราบวงเงินค่าครองชีพ
-                                    </label>
-                                    <p className="text-xs text-muted-foreground leading-relaxed">
-                                        ข้าพเจ้ารับทราบว่าโรงเรียนรัตนโกสินทร์สมโภชลาดกระบัง ในฐานะสถานศึกษาของรัฐ ให้กู้ยืมเฉพาะ<strong className="text-foreground">ค่าครองชีพ จำนวน 1,800 บาทต่อเดือน (21,600 บาทต่อปี)</strong> ค่าเล่าเรียนจะได้รับการสนับสนุนจากรัฐบาลโดยตรง
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Consent 3: PDPA */}
-                            <div className="space-y-3">
+                                {/* Consent 1: Parent */}
                                 <div className="flex items-start space-x-3 bg-muted/30 p-3 sm:p-4 rounded-lg border border-border/50">
-                                    <Checkbox id="consent3" checked={consentPdpa} onCheckedChange={(v) => setConsentPdpa(!!v)} className="mt-0.5" />
+                                    <Checkbox id="consent1" checked={consentParent} onCheckedChange={(v) => setConsentParent(!!v)} className="mt-0.5" />
                                     <div className="space-y-1">
-                                        <label htmlFor="consent3" className="text-sm font-semibold cursor-pointer leading-tight">
-                                            ยินยอมให้จัดเก็บและใช้ข้อมูลส่วนบุคคล (PDPA)
+                                        <label htmlFor="consent1" className="text-sm font-semibold cursor-pointer leading-tight">
+                                            ผู้ปกครองรับทราบและอนุญาตแล้ว
                                         </label>
                                         <p className="text-xs text-muted-foreground leading-relaxed">
-                                            ข้าพเจ้าได้อ่านและทำความเข้าใจประกาศความเป็นส่วนตัว (Privacy Notice) ด้านล่างนี้แล้ว และ<strong className="text-foreground">ให้ความยินยอม</strong>ในการจัดเก็บ ใช้ และเปิดเผยข้อมูลส่วนบุคคลตามวัตถุประสงค์ที่ระบุ
+                                            ข้าพเจ้ายืนยันว่าบิดา มารดา หรือผู้ปกครองตามกฎหมายของข้าพเจ้า ได้รับทราบและอนุญาตให้ข้าพเจ้าดำเนินการยื่นคำขอกู้ยืมเงินจากกองทุนเงินให้กู้ยืมเพื่อการศึกษา (กยศ.) แล้ว
                                         </p>
                                     </div>
                                 </div>
-                                {/* PDPA Full text scroll area */}
-                                <div className="bg-white border border-border rounded-lg max-h-48 overflow-y-auto p-4">
-                                    <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-sans leading-relaxed">
-                                        {PDPA_TEXT}
-                                    </pre>
+
+                                {/* Consent 2: Loan amount */}
+                                <div className="flex items-start space-x-3 bg-muted/30 p-3 sm:p-4 rounded-lg border border-border/50">
+                                    <Checkbox id="consent2" checked={consentLoan} onCheckedChange={(v) => setConsentLoan(!!v)} className="mt-0.5" />
+                                    <div className="space-y-1">
+                                        <label htmlFor="consent2" className="text-sm font-semibold cursor-pointer leading-tight">
+                                            รับทราบวงเงินค่าครองชีพ
+                                        </label>
+                                        <p className="text-xs text-muted-foreground leading-relaxed">
+                                            ข้าพเจ้ารับทราบว่าโรงเรียนรัตนโกสินทร์สมโภชลาดกระบัง ในฐานะสถานศึกษาของรัฐ ให้กู้ยืมเฉพาะ<strong className="text-foreground">ค่าครองชีพ จำนวน 1,800 บาทต่อเดือน (21,600 บาทต่อปี)</strong> ค่าเล่าเรียนจะได้รับการสนับสนุนจากรัฐบาลโดยตรง
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        </CardContent>
-                        <CardFooter className="flex gap-2 border-t border-border/50 pt-5">
-                            <Button variant="outline" onClick={goBack} className="flex-1">
-                                <ChevronLeft className="w-4 h-4 mr-1" /> ย้อนกลับ
-                            </Button>
-                            <Button
-                                onClick={goNext}
-                                disabled={!consentParent || !consentLoan || !consentPdpa || loading}
-                                className="flex-1 shadow-md shadow-primary/20"
-                            >
-                                {loading ? "กำลังส่งข้อมูล..." : <>สมัครสมาชิก <FileCheck className="w-4 h-4 ml-1" /></>}
-                            </Button>
-                        </CardFooter>
-                    </>
-                )}
+
+                                {/* Consent 3: PDPA */}
+                                <div className="space-y-3">
+                                    <div className="flex items-start space-x-3 bg-muted/30 p-3 sm:p-4 rounded-lg border border-border/50">
+                                        <Checkbox id="consent3" checked={consentPdpa} onCheckedChange={(v) => setConsentPdpa(!!v)} className="mt-0.5" />
+                                        <div className="space-y-1">
+                                            <label htmlFor="consent3" className="text-sm font-semibold cursor-pointer leading-tight">
+                                                ยินยอมให้จัดเก็บและใช้ข้อมูลส่วนบุคคล (PDPA)
+                                            </label>
+                                            <p className="text-xs text-muted-foreground leading-relaxed">
+                                                ข้าพเจ้าได้อ่านและทำความเข้าใจประกาศความเป็นส่วนตัว (Privacy Notice) ด้านล่างนี้แล้ว และ<strong className="text-foreground">ให้ความยินยอม</strong>ในการจัดเก็บ ใช้ และเปิดเผยข้อมูลส่วนบุคคลตามวัตถุประสงค์ที่ระบุ
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {/* PDPA Full text scroll area */}
+                                    <div className="bg-white border border-border rounded-lg max-h-48 overflow-y-auto p-4">
+                                        <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-sans leading-relaxed">
+                                            {PDPA_TEXT}
+                                        </pre>
+                                    </div>
+                                </div>
+                            </CardContent>
+                            <CardFooter className="flex gap-2 border-t border-border/50 pt-5">
+                                <Button variant="outline" onClick={goBack} className="flex-1">
+                                    <ChevronLeft className="w-4 h-4 mr-1" /> ย้อนกลับ
+                                </Button>
+                                <Button
+                                    onClick={goNext}
+                                    disabled={!consentParent || !consentLoan || !consentPdpa || loading}
+                                    className="flex-1 shadow-md shadow-primary/20"
+                                >
+                                    {loading ? "กำลังส่งข้อมูล..." : <>สมัครสมาชิก <FileCheck className="w-4 h-4 ml-1" /></>}
+                                </Button>
+                            </CardFooter>
+                        </>
+                    )
+                }
 
                 {/* ====================== STEP 5: OTP ====================== */}
                 {step === 5 && (

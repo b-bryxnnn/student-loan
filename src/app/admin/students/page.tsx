@@ -31,6 +31,8 @@ interface Student {
     accountStatus: string;
     emailVerified: boolean;
     createdAt: string;
+    idCardImage?: string | null;
+    faceImage?: string | null;
     _count: { documents: number; loanRequests: number };
 }
 
@@ -59,6 +61,10 @@ export default function AdminStudentsPage() {
     const [editStudent, setEditStudent] = useState<Student | null>(null);
     const [editForm, setEditForm] = useState({ prefix: "", firstName: "", lastName: "", email: "", phone: "", gradeLevel: "", borrowerType: "" });
     const [editLoading, setEditLoading] = useState(false);
+
+    // Images dialog
+    const [imageViewOpen, setImageViewOpen] = useState(false);
+    const [imageStudent, setImageStudent] = useState<Student | null>(null);
 
     const fetchStudents = useCallback(async (page = 1) => {
         setLoading(true);
@@ -288,6 +294,9 @@ export default function AdminStudentsPage() {
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center justify-center gap-1">
+                                                <Button variant="ghost" size="icon" className="w-8 h-8 text-primary hover:bg-primary/10" onClick={() => { setImageStudent(s); setImageViewOpen(true); }} title="ดูรูปภาพยืนยันตัวตน">
+                                                    <Search className="w-4 h-4" />
+                                                </Button>
                                                 <Button variant="ghost" size="icon" className="w-8 h-8 text-primary hover:bg-primary/10" onClick={() => openEdit(s)} title="แก้ไข">
                                                     <Pencil className="w-4 h-4" />
                                                 </Button>
@@ -419,6 +428,49 @@ export default function AdminStudentsPage() {
                         <Button onClick={handleEdit} disabled={editLoading}>
                             {editLoading ? "กำลังบันทึก..." : "บันทึกการแก้ไข"}
                         </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Images View Dialog */}
+            <Dialog open={imageViewOpen} onOpenChange={setImageViewOpen}>
+                <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>ภาพถ่ายยืนยันตัวตน</DialogTitle>
+                        <DialogDescription>
+                            {imageStudent ? `${imageStudent.prefix}${imageStudent.firstName} ${imageStudent.lastName}` : ""}
+                        </DialogDescription>
+                    </DialogHeader>
+                    {imageStudent && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <div className="space-y-2">
+                                <Label className="font-semibold text-primary">รูปถ่ายบัตรประชาชน</Label>
+                                {imageStudent.idCardImage ? (
+                                    <div className="border border-border rounded-lg overflow-hidden bg-muted">
+                                        <img src={imageStudent.idCardImage} alt="ID Card" className="w-full h-auto object-contain max-h-[300px]" />
+                                    </div>
+                                ) : (
+                                    <div className="border border-border border-dashed rounded-lg p-8 text-center text-muted-foreground bg-muted/30">
+                                        ไม่มีรูปบัตรประชาชน
+                                    </div>
+                                )}
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="font-semibold text-primary">ภาพถ่ายใบหน้า (AI Liveness)</Label>
+                                {imageStudent.faceImage ? (
+                                    <div className="border border-border rounded-lg overflow-hidden bg-black flex justify-center aspect-square md:aspect-auto">
+                                        <img src={imageStudent.faceImage} alt="Face Image" className="h-full w-auto object-cover max-h-[300px]" />
+                                    </div>
+                                ) : (
+                                    <div className="border border-border border-dashed rounded-lg p-8 text-center text-muted-foreground bg-muted/30 h-full flex items-center justify-center">
+                                        ไม่มีรูปใบหน้า
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setImageViewOpen(false)}>ปิด</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

@@ -90,13 +90,19 @@ export default function FaceLiveness({ onComplete }: FaceLivenessProps) {
             setStream(mediaStream);
             if (videoRef.current) {
                 videoRef.current.srcObject = mediaStream;
-                videoRef.current.onloadedmetadata = () => {
-                    videoRef.current?.play();
-                    startDetection();
+                videoRef.current.onloadeddata = async () => {
+                    try {
+                        await videoRef.current?.play();
+                        startDetection();
+                    } catch (e) {
+                        console.error("Video play failed", e);
+                        setError("เกิดข้อผิดพลาดในการเปิดกล้อง");
+                    }
                 };
             }
-        } catch {
-            setError("ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตให้เข้าถึงกล้อง");
+        } catch (err) {
+            console.error(err);
+            setError("ไม่สามารถเปิดกล้องได้ กรุณาให้สิทธิ์เข้าถึงหรือใช้เบราว์เซอร์อื่น");
         }
     }, [modelsLoaded]);
 
@@ -259,10 +265,10 @@ export default function FaceLiveness({ onComplete }: FaceLivenessProps) {
                     <div
                         key={i}
                         className={`transition-all rounded-full ${completedSteps[i]
-                                ? "w-6 h-2 bg-success shadow-[0_0_8px_rgba(34,197,94,0.4)]"
-                                : i === currentStep
-                                    ? "w-8 h-2 bg-primary shadow-[0_0_8px_rgba(37,99,235,0.4)]"
-                                    : "w-2 h-2 bg-muted-foreground/30"
+                            ? "w-6 h-2 bg-success shadow-[0_0_8px_rgba(34,197,94,0.4)]"
+                            : i === currentStep
+                                ? "w-8 h-2 bg-primary shadow-[0_0_8px_rgba(37,99,235,0.4)]"
+                                : "w-2 h-2 bg-muted-foreground/30"
                             }`}
                     />
                 ))}

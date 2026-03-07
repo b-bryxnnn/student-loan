@@ -51,6 +51,8 @@ export async function GET(req: Request) {
                     accountStatus: true,
                     emailVerified: true,
                     createdAt: true,
+                    idCardImage: true,
+                    faceImage: true,
                     _count: {
                         select: {
                             documents: true,

@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { AlertCircle, CheckCircle2, UserPlus, ShieldCheck, Camera, CreditCard, FileCheck, ChevronRight, ChevronLeft, Upload, ScrollText } from "lucide-react";
+import { AlertCircle, CheckCircle2, UserPlus, ShieldCheck, Camera, CreditCard, FileCheck, ChevronRight, ChevronLeft, Upload, ScrollText, Loader2 } from "lucide-react";
 import { validateThaiId } from "@/lib/validateThaiId";
 import FaceLiveness from "@/components/FaceLiveness";
 import { createWorker } from 'tesseract.js';

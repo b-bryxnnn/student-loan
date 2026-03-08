@@ -493,7 +493,6 @@ export default function FaceLiveness({ onComplete }: FaceLivenessProps) {
                             {CHALLENGES[currentStep]?.dir === "LEFT" && "←"}
                             {CHALLENGES[currentStep]?.dir === "RIGHT" && "→"}
                             {CHALLENGES[currentStep]?.dir === "UP" && "↑"}
-                            {CHALLENGES[currentStep]?.dir === "DOWN" && "↓"}
                             {CHALLENGES[currentStep]?.dir === "CENTER" && "●"}
                         </div>
                     </div>

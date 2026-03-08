@@ -41,8 +41,6 @@ export default async function DashboardPage() {
         const allDocs = isNewBorrower ? [contractDoc, confirmDoc] : [confirmDoc];
         const hasRejected = allDocs.some(d => d?.status === 'REJECTED');
         const hasPending = allDocs.some(d => d?.status === 'PENDING');
-        const hasRejected = allDocs.some(d => d?.status === 'REJECTED');
-        const hasPending = allDocs.some(d => d?.status === 'PENDING');
         const allCentral = allDocs.every(d => d?.sentToCentral);
         const allReceived = allDocs.every(d => d?.originalReceived || d?.sentToCentral);
 

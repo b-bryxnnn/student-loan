@@ -33,6 +33,7 @@ interface Student {
     createdAt: string;
     idCardImage?: string | null;
     faceImage?: string | null;
+    appConnectProof?: string | null;
     _count: { documents: number; loanRequests: number };
 }
 
@@ -442,7 +443,7 @@ export default function AdminStudentsPage() {
                         </DialogDescription>
                     </DialogHeader>
                     {imageStudent && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                             <div className="space-y-2">
                                 <Label className="font-semibold text-primary">รูปถ่ายบัตรประชาชน</Label>
                                 {imageStudent.idCardImage ? (
@@ -456,7 +457,7 @@ export default function AdminStudentsPage() {
                                 )}
                             </div>
                             <div className="space-y-2">
-                                <Label className="font-semibold text-primary">ภาพถ่ายใบหน้า (AI Liveness)</Label>
+                                <Label className="font-semibold text-primary">ภาพถ่ายใบหน้า (AI)</Label>
                                 {imageStudent.faceImage ? (
                                     <div className="border border-border rounded-lg overflow-hidden bg-black flex justify-center aspect-square md:aspect-auto">
                                         <img src={imageStudent.faceImage} alt="Face Image" className="h-full w-auto object-cover max-h-[300px]" />
@@ -464,6 +465,18 @@ export default function AdminStudentsPage() {
                                 ) : (
                                     <div className="border border-border border-dashed rounded-lg p-8 text-center text-muted-foreground bg-muted/30 h-full flex items-center justify-center">
                                         ไม่มีรูปใบหน้า
+                                    </div>
+                                )}
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="font-semibold text-blue-600">สกรีนช็อตกยศ. Connect</Label>
+                                {imageStudent.appConnectProof ? (
+                                    <div className="border border-blue-200 rounded-lg overflow-hidden bg-muted flex justify-center">
+                                        <img src={imageStudent.appConnectProof} alt="App Connect Proof" className="w-full h-auto object-contain max-h-[300px]" />
+                                    </div>
+                                ) : (
+                                    <div className="border border-blue-200 border-dashed rounded-lg p-8 text-center text-muted-foreground bg-blue-50/50 h-full flex items-center justify-center">
+                                        ยังไม่โหลดแอป
                                     </div>
                                 )}
                             </div>

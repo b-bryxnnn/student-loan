@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth';
-import Navbar from '@/components/Navbar';
 
 export default async function DashboardLayout({
     children,
@@ -19,7 +18,6 @@ export default async function DashboardLayout({
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-background to-muted/30">
-            <Navbar userRole={session.role} />
             <main className="container mx-auto px-4 py-8">
                 {children}
             </main>

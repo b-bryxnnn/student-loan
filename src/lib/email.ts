@@ -64,6 +64,21 @@ const sendViaAppsScript = async (to: string, subject: string, html: string, text
 // ========== โหมด 2: Nodemailer ==========
 const getTransporter = () => {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return null;
+
+  // หากตั้ง EMAIL_USER = "resend" หมายความว่าใช้บริการของ Resend
+  if (process.env.EMAIL_USER === 'resend') {
+    return nodemailer.createTransport({
+      host: 'smtp.resend.com',
+      port: 465,
+      secure: true,
+      auth: {
+        user: 'resend',
+        pass: process.env.EMAIL_PASS, // ใส่ API Key ของ Resend ลงใน EMAIL_PASS
+      },
+    });
+  }
+
+  // สำหรับ Gmail ปกติ
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -78,8 +93,14 @@ const sendViaNodemailer = async (to: string, subject: string, html: string, text
   if (!transporter) return false;
 
   try {
+    // ถ้าใช้ Resend ระบบจะบังคับให้ส่งจากโดเมนที่ Verify แล้ว
+    // คุณสามารถเปลี่ยน "info@rattanakosin.ac.th" เป็นโดเมนของคุณได้เลย
+    const isResend = process.env.EMAIL_USER === 'resend';
+    const senderEmail = isResend ? 'no-reply@rslhub.me' : process.env.EMAIL_USER;
+    // ^ เปลี่ยน onboarding@resend.dev เป็น info@โดเมนโรงเรียน.ac.th เมื่อยืนยันโดเมนแล้ว
+
     const info = await transporter.sendMail({
-      from: `"งาน กยศ. รส.ล." <${process.env.EMAIL_USER}>`,
+      from: `"งาน กยศ. รส.ล." <${senderEmail}>`,
       to,
       subject,
       text,

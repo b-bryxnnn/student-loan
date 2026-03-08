@@ -223,12 +223,11 @@ function DocumentForm() {
                                         <Label>ภาคเรียนที่</Label>
                                         <Select value={formData.semester} onValueChange={(v) => setFormData({ ...formData, semester: v })}>
                                             <SelectTrigger className="bg-background/50">
-                                                <SelectValue />
+                                                <SelectValue placeholder="เลือกเทอม" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="1">1</SelectItem>
-                                                <SelectItem value="2">2</SelectItem>
-                                                <SelectItem value="3">3 (ฤดูร้อน)</SelectItem>
+                                                <SelectItem value="1">เทอม 1 (ภาคต้น)</SelectItem>
+                                                <SelectItem value="2">เทอม 2 (ภาคปลาย)</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>

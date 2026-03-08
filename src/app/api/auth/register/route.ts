@@ -15,6 +15,21 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "คุณลงทะเบียนบ่อยเกินไป กรุณารอสักครู่" }, { status: 429 });
         }
 
+        // Daily Registration Quota (Max 80 per day to protect email SMTP limits)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayCount = await db.user.count({
+            where: {
+                createdAt: {
+                    gte: today
+                }
+            }
+        });
+
+        if (todayCount >= 80) {
+            return NextResponse.json({ error: "โควต้าสมัครสมาชิกระบบรายวันเต็มแล้ว (80 คน/วัน) กรุณาลองใหม่ในวันพรุ่งนี้" }, { status: 429 });
+        }
+
         const body = await req.json();
         console.log("REGISTER body received:", JSON.stringify({ ...body, password: '***', idCardImage: body.idCardImage ? '[base64]' : null, faceImage: body.faceImage ? '[base64]' : null }));
         const { prefix, firstName, lastName, studentId, idCard, phone, email, password, borrowerType, idCardImage, faceImage, consentParent, consentLoan, consentPdpa } = body;

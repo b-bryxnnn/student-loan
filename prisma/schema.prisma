@@ -28,6 +28,7 @@ model User {
   // รูปภาพ (base64)
   idCardImage     String?       @db.Text // รูปบัตรประชาชน
   faceImage       String?       @db.Text // รูปใบหน้า (จาก liveness check)
+  appConnectProof String?       @db.Text // สกรีนช็อต กยศ. Connect
 
   // ความยินยอม
   consentParent   Boolean       @default(false) // ผู้ปกครองรับทราบ

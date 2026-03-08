@@ -41,6 +41,8 @@ export default async function DashboardPage() {
         const allDocs = isNewBorrower ? [contractDoc, confirmDoc] : [confirmDoc];
         const hasRejected = allDocs.some(d => d?.status === 'REJECTED');
         const hasPending = allDocs.some(d => d?.status === 'PENDING');
+        const hasRejected = allDocs.some(d => d?.status === 'REJECTED');
+        const hasPending = allDocs.some(d => d?.status === 'PENDING');
         const allCentral = allDocs.every(d => d?.sentToCentral);
         const allReceived = allDocs.every(d => d?.originalReceived || d?.sentToCentral);
 
@@ -48,6 +50,12 @@ export default async function DashboardPage() {
         else if (allCentral || allReceived) currentStep = 5;
         else if (hasPending) currentStep = 4;
         else currentStep = 4;
+    }
+
+    // Step 2 is App Connect Upload
+    const hasAppProof = !!user.appConnectProof;
+    if ((isNewBorrower && loanRequest?.status === 'APPROVED' && !hasAppProof) || (!isNewBorrower && !hasAppProof)) {
+        currentStep = 2; // รอโหลแอป
     }
 
     return (
@@ -83,8 +91,8 @@ export default async function DashboardPage() {
                         </div>
                     ) : (
                         <Card className={`border-l-4 ${loanRequest.status === 'APPROVED' ? 'border-l-success bg-success/5' :
-                                loanRequest.status === 'REJECTED' ? 'border-l-destructive bg-destructive/5' :
-                                    'border-l-warning bg-warning/5'
+                            loanRequest.status === 'REJECTED' ? 'border-l-destructive bg-destructive/5' :
+                                'border-l-warning bg-warning/5'
                             }`}>
                             <CardHeader className="pb-3">
                                 <CardTitle className="flex items-center gap-2 text-lg">
@@ -123,12 +131,81 @@ export default async function DashboardPage() {
                 </div>
             )}
 
+            {/* App Connect Download Step (For Approved New Borrowers OR Old Borrowers) */}
+            {((isNewBorrower && loanRequest?.status === 'APPROVED') || !isNewBorrower) && (
+                <div className="mb-6">
+                    {!hasAppProof ? (
+                        <div className="bg-blue-50/50 border border-blue-200 dark:bg-blue-950/20 dark:border-blue-900/50 p-6 rounded-xl shadow-sm relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-4 opacity-10">
+                                <Download className="w-32 h-32 text-blue-500" />
+                            </div>
+                            <div className="relative z-10 flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+                                <div className="max-w-xl">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold dark:bg-blue-900 dark:text-blue-300">2</span>
+                                        <h3 className="text-xl font-bold text-blue-900 dark:text-blue-300">ดาวน์โหลดแอปพลิเคชัน &quot;กยศ. Connect&quot;</h3>
+                                    </div>
+                                    <p className="text-blue-800/80 dark:text-blue-200/70 mb-4 mt-2">
+                                        ข้อบังคับก่อนพิมพ์เอกสาร: นักเรียนต้องดาวน์โหลดและลงทะเบียนแอปพลิเคชันของ กยศ. ในสมาร์ทโฟนให้เรียบร้อย และแคปภาพหน้าจอ (Screenshot) ที่แสดงชื่อโปรไฟล์ของนักเรียนในแอปมาอัปโหลดเป็นหลักฐาน เพื่อปลดล็อกเมนูถัดไป
+                                    </p>
+                                    <div className="flex flex-wrap gap-3">
+                                        <a href="https://apps.apple.com/th/app/%E0%B8%81%E0%B8%A2%E0%B8%A8-connect/id1443661642" target="_blank" rel="noopener noreferrer">
+                                            <Button variant="outline" className="bg-white/80 border-blue-200 hover:bg-white text-blue-700 shadow-sm">
+                                                🍎 App Store (iOS)
+                                            </Button>
+                                        </a>
+                                        <a href="https://play.google.com/store/apps/details?id=th.go.studentloan.isl&hl=th" target="_blank" rel="noopener noreferrer">
+                                            <Button variant="outline" className="bg-white/80 border-blue-200 hover:bg-white text-blue-700 shadow-sm">
+                                                🤖 Google Play (Android)
+                                            </Button>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div className="shrink-0 w-full md:w-auto mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-blue-200/50 md:pl-6 pl-0">
+                                    <Link href="/dashboard/app-connect">
+                                        <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all h-12 px-6">
+                                            <FileText className="w-5 h-5 mr-2" />
+                                            อัปโหลดรูปหลักฐานการโหลดแอป
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <Card className="border-l-4 border-l-blue-500 bg-blue-50/30 dark:bg-blue-900/10">
+                            <CardHeader className="pb-3">
+                                <CardTitle className="flex items-center gap-2 text-lg text-blue-800 dark:text-blue-300">
+                                    <CheckCircle2 className="w-5 h-5" />
+                                    หลักฐานการติดตั้งแอป กยศ. Connect
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="font-medium">สถานะ:</span>
+                                            <span className="text-blue-700 dark:text-blue-400 font-semibold px-2 py-0.5 bg-blue-100 dark:bg-blue-900/50 rounded-full text-sm">ตรวจสอบแล้ว</span>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground">คุณได้อัปโหลดหลักฐานเรียบร้อยแล้ว สามารถดำเนินการต่อได้</p>
+                                    </div>
+                                    <Link href="/dashboard/app-connect">
+                                        <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/50">
+                                            ดูรูปหลักฐาน
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+                </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Status Cards */}
-                <Card className="glass border-primary/10 hover-lift">
+                <Card className={`glass hover-lift ${!hasAppProof ? 'opacity-50 select-none grayscale-[50%]' : 'border-primary/10'}`}>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <FileCheckIcon className="w-5 h-5 text-primary" />
+                            <FileCheckIcon className={`w-5 h-5 ${hasAppProof ? 'text-primary' : 'text-muted-foreground'}`} />
                             สถานะเอกสารแบบยืนยัน
                         </CardTitle>
                         <CardDescription>การส่งแบบยืนยันเบิกเงินกู้ยืมภาคเรียนปัจจุบัน</CardDescription>
@@ -137,15 +214,15 @@ export default async function DashboardPage() {
                         <DocumentStatusCard
                             documents={user.documents}
                             type="CONFIRMATION"
-                            disabled={isNewBorrower && !hasLoanRequest}
+                            disabled={(isNewBorrower && !hasLoanRequest) || !hasAppProof}
                         />
                     </CardContent>
                 </Card>
 
-                <Card className="glass border-secondary-foreground/10 hover-lift">
+                <Card className={`glass hover-lift ${!hasAppProof ? 'opacity-50 select-none grayscale-[50%]' : 'border-secondary-foreground/10'}`}>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <FileSignature className="w-5 h-5 text-secondary-foreground" />
+                            <FileSignature className={`w-5 h-5 ${hasAppProof ? 'text-secondary-foreground' : 'text-muted-foreground'}`} />
                             สถานะเอกสารสัญญากู้ยืม
                         </CardTitle>
                         <CardDescription>เฉพาะผู้กู้รายใหม่ หรือเปลี่ยนระดับชั้น</CardDescription>
@@ -154,7 +231,7 @@ export default async function DashboardPage() {
                         <DocumentStatusCard
                             documents={user.documents}
                             type="CONTRACT"
-                            disabled={!isNewBorrower || (isNewBorrower && !hasLoanRequest)}
+                            disabled={!isNewBorrower || (isNewBorrower && !hasLoanRequest) || !hasAppProof}
                         />
                     </CardContent>
                 </Card>

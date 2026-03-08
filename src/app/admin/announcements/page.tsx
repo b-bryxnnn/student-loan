@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Bell, Plus, Trash2, Send, RefreshCw } from "lucide-react";
+import { Bell, Plus, Trash2, Send, RefreshCw, CheckCircle2, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
@@ -35,6 +35,10 @@ export default function AdminAnnouncementsPage() {
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
     const [sendNotification, setSendNotification] = useState(false);
+
+    // Copy Helper
+    const [showCopyDialog, setShowCopyDialog] = useState(false);
+    const [copyContent, setCopyContent] = useState("");
 
     const fetchAnnouncements = async () => {
         setLoading(true);
@@ -69,6 +73,13 @@ export default function AdminAnnouncementsPage() {
             const data = await res.json();
             if (res.ok) {
                 toast.success(data.message || "สร้างประกาศสำเร็จ");
+
+                // Set Up Copy Helper instead of LINE Notify
+                const appUrl = window.location.origin;
+                const textToCopy = `📣 ประกาศใหม่จาก กยศ. รส.ล.\nหัวข้อ: ${title}\n\nรายละเอียด:\n${content}\n\nเข้าสู่ระบบเพื่อดำเนินการ: ${appUrl}/login`;
+                setCopyContent(textToCopy);
+                setShowCopyDialog(true);
+
                 setTitle("");
                 setContent("");
                 setSendNotification(false);
@@ -224,6 +235,37 @@ export default function AdminAnnouncementsPage() {
                     ))
                 )}
             </div>
+
+            {/* Copy Helper Dialog */}
+            <Dialog open={showCopyDialog} onOpenChange={setShowCopyDialog}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="text-success flex items-center gap-2">
+                            <CheckCircle2 className="w-6 h-6" />
+                            ประกาศสำเร็จ!
+                        </DialogTitle>
+                        <DialogDescription>
+                            กรุณากดคัดลอกข้อความด้านล่างนี้ เพื่อนำไปวางประกาศในกลุ่ม LINE หรือช่องทางที่ติดต่อกับนักเรียน
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="bg-muted p-4 rounded-md border border-border">
+                        <pre className="text-sm font-sans whitespace-pre-wrap text-foreground">{copyContent}</pre>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            onClick={() => {
+                                navigator.clipboard.writeText(copyContent);
+                                toast.success("คัดลอกข้อความสำเร็จ! สามารถนำไปวางในช่องแชทได้เลย");
+                                setShowCopyDialog(false);
+                            }}
+                            className="w-full bg-[#06C755] hover:bg-[#05a546] text-white"
+                        >
+                            <Copy className="w-4 h-4 mr-2" />
+                            คัดลอกข้อความสำหรับ LINE
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

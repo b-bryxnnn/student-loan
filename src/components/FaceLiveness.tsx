@@ -196,12 +196,12 @@ export default function FaceLiveness({ onComplete }: FaceLivenessProps) {
                 const faceHeight = jawBottom.y - noseBridge.y;
                 const pitchRatio = faceHeight > 0 ? noseToEyesDist / faceHeight : 0.5;
 
-                // ปรับ threshold ให้ง่ายขึ้น (โดยเฉพาะ UP/DOWN)
-                const isCenter = yawRatio > 0.6 && yawRatio < 1.45 && pitchRatio > 0.25 && pitchRatio < 0.7;
+                // ปรับ threshold ให้ง่ายขึ้นมากๆ (โดยเฉพาะ UP/DOWN เวลาก้มหน้า)
+                const isCenter = yawRatio > 0.55 && yawRatio < 1.55 && pitchRatio > 0.20 && pitchRatio < 0.75;
                 const isLeft = yawRatio > 1.35;
                 const isRight = yawRatio < 0.65;
-                const isUp = pitchRatio < 0.28;    // ง่ายขึ้นจาก 0.3
-                const isDown = pitchRatio > 0.62;  // ง่ายขึ้นจาก 0.65
+                const isUp = pitchRatio < 0.35;    // ง่ายขึ้นมากๆ (สะบัดนิดเดียวผ่าน)
+                const isDown = pitchRatio > 0.55;  // ง่ายขึ้นมากๆ สำหรับการก้มหน้า
 
                 if (phaseRef.current === "capture") {
                     // Final center capture
@@ -345,41 +345,41 @@ export default function FaceLiveness({ onComplete }: FaceLivenessProps) {
     // Tips screen
     if (phase === "tips") {
         return (
-            <div className="text-center space-y-4 py-8 bg-card border shadow-lg rounded-xl p-6 sm:p-8">
-                <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center mx-auto mb-4">
+            <div className="text-center space-y-4 py-8 bg-white dark:bg-zinc-950 rounded-xl p-6 sm:p-8 shadow-xl border border-border">
+                <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center mx-auto mb-4">
                     <Camera className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                 </div>
-                <h3 className="text-xl font-bold text-card-foreground">ระบบยืนยันตัวตนด้วยใบหน้า</h3>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">ระบบยืนยันตัวตนด้วยใบหน้า</h3>
 
-                {/* Tips with high contrast */}
-                <div className="bg-white dark:bg-slate-900 border-2 border-primary/20 rounded-xl p-5 text-left space-y-3 max-w-sm mx-auto shadow-sm">
-                    <p className="text-sm font-bold text-primary flex items-center gap-2 mb-3">
+                {/* Tips with absolute high contrast */}
+                <div className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 text-left space-y-4 max-w-sm mx-auto shadow-sm">
+                    <p className="text-sm font-bold text-blue-700 dark:text-blue-400 flex items-center gap-2 mb-2">
                         <Lightbulb className="w-5 h-5" /> คำแนะนำก่อนเริ่มสแกน
                     </p>
-                    <div className="space-y-3 text-sm text-foreground/90">
+                    <div className="space-y-4 text-sm text-slate-800 dark:text-slate-200 font-medium">
                         <p className="flex items-start gap-3">
-                            <span className="bg-muted p-1.5 rounded-md text-foreground">
-                                <Glasses className="w-4 h-4" />
+                            <span className="bg-white dark:bg-zinc-800 p-2 rounded-lg shadow-sm border border-slate-100 dark:border-zinc-700">
+                                <Glasses className="w-4 h-4 text-slate-700 dark:text-slate-300" />
                             </span>
-                            <span className="mt-1"><strong>โปรดถอดแว่นตา</strong> ป้องกันแสงสะท้อน</span>
+                            <span className="mt-1.5 leading-tight"><strong>โปรดถอดแว่นตา</strong><br /><span className="text-xs text-slate-500 dark:text-slate-400 font-normal">ป้องกันแสงสะท้อนจากเลนส์</span></span>
                         </p>
                         <p className="flex items-start gap-3">
-                            <span className="bg-muted p-1.5 rounded-md text-foreground">
-                                <Sun className="w-4 h-4" />
+                            <span className="bg-white dark:bg-zinc-800 p-2 rounded-lg shadow-sm border border-slate-100 dark:border-zinc-700">
+                                <Sun className="w-4 h-4 text-slate-700 dark:text-slate-300" />
                             </span>
-                            <span className="mt-1"><strong>อยู่ในที่สว่าง</strong> หลีกเลี่ยงเงามืดหรือการย้อนแสง</span>
+                            <span className="mt-1.5 leading-tight"><strong>อยู่ในที่สว่าง</strong><br /><span className="text-xs text-slate-500 dark:text-slate-400 font-normal">หลีกเลี่ยงเงามืดหรือการย้อนแสง</span></span>
                         </p>
                         <p className="flex items-start gap-3">
-                            <span className="bg-muted p-1.5 rounded-md text-foreground">
-                                <Camera className="w-4 h-4" />
+                            <span className="bg-white dark:bg-zinc-800 p-2 rounded-lg shadow-sm border border-slate-100 dark:border-zinc-700">
+                                <Camera className="w-4 h-4 text-slate-700 dark:text-slate-300" />
                             </span>
-                            <span className="mt-1"><strong>จัดหน้าตรง</strong> และค่อยๆ ทำตามคำสั่งบนหน้าจอ</span>
+                            <span className="mt-1.5 leading-tight"><strong>ทำตามคำสั่งบนหน้าจอ</strong><br /><span className="text-xs text-slate-500 dark:text-slate-400 font-normal">เช่น หันซ้าย ขวา ก้ม หรือเงยหน้า</span></span>
                         </p>
                     </div>
                 </div>
 
-                <p className="text-xs text-muted-foreground max-w-sm mx-auto mt-4 px-2">
-                    ข้อมูลจะถูกประมวลผลบนเครื่องของคุณเพื่อความปลอดภัยสูงสุดและไม่ถ่ายโอนวิดีโอออกจากอุปกรณ์
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-6 px-2 leading-relaxed">
+                    ข้อมูลประมวลผลบนเครื่องของคุณเพื่อความปลอดภัยสูงสุดและไม่ถ่ายโอนวิดีโอออกจากอุปกรณ์
                 </p>
 
                 {error && <p className="text-xs text-destructive flex justify-center items-center gap-1"><AlertCircle className="w-3 h-3" /> {error}</p>}

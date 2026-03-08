@@ -17,37 +17,75 @@ import IdCardCamera from "@/components/IdCardCamera";
 import { createWorker } from 'tesseract.js';
 
 // ====== PDPA agreement text ======
-const PDPA_TEXT = `ประกาศความเป็นส่วนตัว (Privacy Notice) — ระบบส่งเอกสาร กยศ.
-โรงเรียนรัตนโกสินทร์สมโภชลาดกระบัง
+const PDPA_TEXT = `ประกาศความเป็นส่วนตัว (Privacy Notice)
+ระบบส่งเอกสาร กยศ. — โรงเรียนรัตนโกสินทร์สมโภชลาดกระบัง
+ฉบับปรับปรุงล่าสุด: มกราคม 2568
 
 1. ผู้ควบคุมข้อมูลส่วนบุคคล
-โรงเรียนรัตนโกสินทร์สมโภชลาดกระบัง เป็นผู้ควบคุมข้อมูลส่วนบุคคลตามพระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562 (PDPA)
+โรงเรียนรัตนโกสินทร์สมโภชลาดกระบัง (ต่อไปนี้เรียกว่า "โรงเรียน") เป็นผู้ควบคุมข้อมูลส่วนบุคคลตามพระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562 (PDPA) โดยมีหน้าที่รับผิดชอบในการเก็บรวบรวม ใช้ หรือเปิดเผยข้อมูลส่วนบุคคลของท่านภายใต้ระบบนี้
 
 2. ข้อมูลส่วนบุคคลที่จัดเก็บ
 ระบบจัดเก็บข้อมูลดังต่อไปนี้เพื่อประกอบการพิจารณาคำขอกู้ยืมเงิน กยศ.:
-- ชื่อ-นามสกุล, คำนำหน้า, เลขประจำตัวประชาชน
-- เลขประจำตัวนักเรียน, ระดับชั้น
-- อีเมล, เบอร์โทรศัพท์
-- ภาพถ่ายบัตรประจำตัวประชาชน
-- ภาพถ่ายใบหน้า (จากการยืนยันตัวตน)
-- ผลการเรียน (GPAX, ปพ.1)
-- ข้อมูลทางการเงิน (รายได้ครอบครัว, ทุนการศึกษา)
-- เอกสารสัญญากู้ยืมเงินและแบบยืนยันเบิกเงิน
+• ข้อมูลส่วนตัว: ชื่อ-นามสกุล, คำนำหน้า, เลขประจำตัวประชาชน 13 หลัก
+• ข้อมูลการศึกษา: เลขประจำตัวนักเรียน, ระดับชั้น, ผลการเรียน (GPAX, ปพ.1)
+• ข้อมูลการติดต่อ: อีเมล, เบอร์โทรศัพท์
+• ข้อมูลชีวมิติ (Biometric Data): ภาพถ่ายบัตรประจำตัวประชาชน, ภาพถ่ายใบหน้า (จากการยืนยันตัวตน)
+• ข้อมูลทางการเงิน: รายได้ครอบครัว, ทุนการศึกษาที่ได้รับ
+• เอกสารประกอบ: สัญญากู้ยืมเงิน, แบบยืนยันการเบิกเงิน, หนังสือรับรองรายได้
+• ข้อมูลทางเทคนิค: IP Address, ข้อมูลการเข้าใช้งานระบบ (Log)
 
 3. วัตถุประสงค์ในการจัดเก็บ
-- เพื่อดำเนินการเกี่ยวกับการขอกู้ยืมเงินกองทุน กยศ.
-- เพื่อตรวจสอบคุณสมบัติผู้กู้ยืม
-- เพื่อยืนยันตัวตนของผู้กู้ยืม
-- เพื่อติดต่อสื่อสารและแจ้งข้อมูลที่เกี่ยวข้อง
+โรงเรียนจัดเก็บข้อมูลส่วนบุคคลของท่านเพื่อวัตถุประสงค์ดังต่อไปนี้:
+• เพื่อดำเนินการเกี่ยวกับการยื่นคำขอกู้ยืมเงินกองทุน กยศ.
+• เพื่อตรวจสอบคุณสมบัติและความเหมาะสมของผู้กู้ยืม
+• เพื่อยืนยันตัวตนของผู้กู้ยืม ป้องกันการสวมสิทธิ์หรือการแอบอ้าง
+• เพื่อจัดทำเอกสารสัญญากู้ยืมเงินและแบบยืนยันการเบิกเงินกู้ยืม
+• เพื่อติดต่อสื่อสาร แจ้งข้อมูล สถานะ และผลการพิจารณาที่เกี่ยวข้อง
+• เพื่อการบริหารจัดการภายในของงาน กยศ. ประจำโรงเรียน
+• เพื่อปฏิบัติตามกฎหมาย ระเบียบ และข้อบังคับที่เกี่ยวข้อง
 
-4. ระยะเวลาการจัดเก็บ
-ข้อมูลจะถูกจัดเก็บตลอดระยะเวลาที่นักเรียนยังคงสถานะผู้กู้ยืม และจะถูกลบภายใน 1 ปีหลังจากสิ้นสุดสถานะ เว้นแต่จะมีความจำเป็นตามกฎหมาย
+4. ฐานทางกฎหมายในการประมวลผลข้อมูล
+โรงเรียนประมวลผลข้อมูลส่วนบุคคลของท่านภายใต้ฐานทางกฎหมายดังนี้:
+• ความยินยอม (Consent): สำหรับข้อมูลชีวมิติ เช่น ภาพถ่ายใบหน้าและบัตรประชาชน
+• การปฏิบัติตามสัญญา (Contract): สำหรับข้อมูลที่จำเป็นต่อการดำเนินการกู้ยืมเงิน
+• หน้าที่ตามกฎหมาย (Legal Obligation): สำหรับข้อมูลที่กฎหมายกำหนดให้ต้องจัดเก็บ
+• ประโยชน์อันชอบธรรม (Legitimate Interest): สำหรับการป้องกันการทุจริต
 
-5. สิทธิของเจ้าของข้อมูล
-ท่านมีสิทธิในการเข้าถึง แก้ไข ขอรับสำเนา คัดค้าน และขอให้ลบข้อมูลของท่านได้ โดยติดต่อผ่านงาน กยศ. ของโรงเรียน
+5. ระยะเวลาการจัดเก็บ
+• ข้อมูลจะถูกจัดเก็บตลอดระยะเวลาที่นักเรียนยังคงมีสถานะเป็นผู้กู้ยืมของกองทุน กยศ.
+• หลังจากสิ้นสุดสถานะผู้กู้ยืม ข้อมูลจะถูกเก็บรักษาไว้อีก 10 ปี ตามข้อกำหนดของ กยศ. เพื่อวัตถุประสงค์ทางบัญชีและการตรวจสอบ
+• ข้อมูลชีวมิติ (รูปถ่าย) จะถูกลบภายใน 1 ปี หลังจากสิ้นสุดกระบวนการสมัคร เว้นแต่จะมีความจำเป็นตามกฎหมาย
 
-6. การเปิดเผยข้อมูล
-ข้อมูลอาจถูกส่งต่อให้กองทุนเงินให้กู้ยืมเพื่อการศึกษา (กยศ.) เท่านั้น เพื่อประกอบการพิจารณาคำขอกู้ยืม`;
+6. สิทธิของเจ้าของข้อมูล
+ท่านมีสิทธิตามพระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562 ดังนี้:
+• สิทธิในการเข้าถึง (Right of Access): ขอดูข้อมูลส่วนบุคคลของท่านที่โรงเรียนจัดเก็บ
+• สิทธิในการแก้ไข (Right to Rectification): ขอให้แก้ไขข้อมูลที่ไม่ถูกต้องหรือไม่ครบถ้วน
+• สิทธิในการลบ (Right to Erasure): ขอให้ลบข้อมูลเมื่อไม่มีความจำเป็นในการจัดเก็บ
+• สิทธิในการขอรับสำเนา (Right to Data Portability): ขอรับสำเนาข้อมูลในรูปแบบที่อ่านได้
+• สิทธิในการคัดค้าน (Right to Object): คัดค้านการประมวลผลข้อมูลของท่าน
+• สิทธิในการจำกัดการประมวลผล (Right to Restriction): จำกัดการใช้ข้อมูลของท่าน
+• สิทธิในการถอนความยินยอม (Right to Withdraw Consent): ถอนความยินยอมเมื่อใดก็ได้
+ท่านสามารถใช้สิทธิข้างต้นได้โดยติดต่อผ่านงาน กยศ. ของโรงเรียน หรือแจ้งผ่านระบบนี้
+
+7. การเปิดเผยข้อมูล
+• ข้อมูลของท่านอาจถูกส่งต่อให้กองทุนเงินให้กู้ยืมเพื่อการศึกษา (กยศ.) เท่านั้น เพื่อประกอบการพิจารณาคำขอกู้ยืม
+• โรงเรียนจะไม่เปิดเผยข้อมูลส่วนบุคคลของท่านแก่บุคคลภายนอกอื่นใด เว้นแต่จะได้รับความยินยอมจากท่าน หรือเป็นกรณีที่กฎหมายกำหนด
+• ไม่มีการส่งข้อมูลไปยังต่างประเทศ
+
+8. มาตรการรักษาความปลอดภัย
+• ข้อมูลถูกจัดเก็บในระบบที่มีการเข้ารหัส (encryption) และจำกัดสิทธิ์การเข้าถึง
+• มีระบบยืนยันตัวตนด้วยรหัส OTP ก่อนเข้าถึงข้อมูล
+• มีระบบ audit log บันทึกการเข้าถึงข้อมูลทุกครั้ง
+• เจ้าหน้าที่ที่เข้าถึงข้อมูลผ่านการอบรมด้านความปลอดภัยข้อมูลส่วนบุคคล
+
+9. ผลกระทบจากการไม่ให้ข้อมูล
+หากท่านไม่ให้ข้อมูลส่วนบุคคลที่จำเป็น โรงเรียนจะไม่สามารถดำเนินการยื่นคำขอกู้ยืมเงิน กยศ. ให้ท่านได้
+
+10. ช่องทางติดต่อ
+หากมีข้อสงสัยหรือต้องการใช้สิทธิเกี่ยวกับข้อมูลส่วนบุคคล สามารถติดต่อได้ที่:
+งาน กยศ. โรงเรียนรัตนโกสินทร์สมโภชลาดกระบัง
+อีเมล: กยศ@rsl.ac.th
+โทรศัพท์: 02-326-4975`;
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -112,45 +150,84 @@ export default function RegisterPage() {
     const processOcr = async (base64: string) => {
         setIsOcrProcessing(true);
         setIsIdCameraOpen(false);
-        toast.info("กำลังดึงข้อมูลจากบัตร โปรดรอสักครู่...", { duration: 5000 });
+        toast.info("กำลังดึงข้อมูลจากบัตร โปรดรอสักครู่...", { duration: 8000 });
         try {
             const worker = await createWorker('tha+eng');
+            // ปรับ parameters เพื่อเพิ่มความแม่นยำ
+            await worker.setParameters({
+                tessedit_pageseg_mode: '6' as any, // Uniform block of text
+            });
             const ret = await worker.recognize(base64);
             const text = ret.data.text;
+            console.log('OCR Raw Text:', text);
             await worker.terminate();
 
-            const idCardMatch = text.match(/\b[1-9]\s?\d{4}\s?\d{5}\s?\d{2}\s?\d\b/);
-            const idCardNumber = idCardMatch ? idCardMatch[0].replace(/\s+/g, '') : '';
+            // ดึงเลขบัตรประชาชน — รองรับหลายรูปแบบ
+            let idCardNumber = '';
+            // Pattern 1: x-xxxx-xxxxx-xx-x format
+            const idFormatted = text.match(/[1-9][-\s]?\d{4}[-\s]?\d{5}[-\s]?\d{2}[-\s]?\d/);
+            if (idFormatted) {
+                idCardNumber = idFormatted[0].replace(/[-\s]+/g, '');
+            }
+            // Pattern 2: continuous 13 digits
+            if (!idCardNumber) {
+                const idContinuous = text.match(/[1-9]\d{12}/);
+                if (idContinuous) idCardNumber = idContinuous[0];
+            }
+            // Pattern 3: digits with spaces between each group
+            if (!idCardNumber) {
+                const idSpaced = text.match(/[1-9]\s*\d\s*\d\s*\d\s*\d\s*\d\s*\d\s*\d\s*\d\s*\d\s*\d\s*\d\s*\d/);
+                if (idSpaced) idCardNumber = idSpaced[0].replace(/\s+/g, '');
+            }
 
             let prefix = '';
             let firstName = '';
             let lastName = '';
 
-            const thaiNameRegex = /(นาย|นางสาว|นาง|ด\.ช\.|ด\.ญ\.)\s*([ก-๙]+)\s+([ก-๙]+)/;
-            const nameMatch = text.match(thaiNameRegex);
+            // ลองหลายรูปแบบ regex
+            const thaiNamePatterns = [
+                // Pattern 1: คำนำหน้า + ชื่อ + นามสกุล (standard)
+                /(นาย|นางสาว|นาง|ด\.ช\.|ด\.ญ\.|เด็กชาย|เด็กหญิง)\s*([ก-๙]+)\s+([ก-๙]+)/,
+                // Pattern 2: ชื่อตัว / Name in Thai after keyword
+                /ชื่อตัว[\s:]*([ก-๙]+)/,
+                // Pattern 3: ชื่อสกุล / Last name after keyword
+                /ชื่อสกุล[\s:]*([ก-๙]+)/,
+            ];
 
+            const nameMatch = text.match(thaiNamePatterns[0]);
             if (nameMatch) {
-                prefix = nameMatch[1];
+                const rawPrefix = nameMatch[1];
+                if (rawPrefix.includes('เด็กชาย') || rawPrefix === 'ด.ช.') prefix = 'ด.ช.';
+                else if (rawPrefix.includes('เด็กหญิง') || rawPrefix === 'ด.ญ.') prefix = 'ด.ญ.';
+                else prefix = rawPrefix;
                 firstName = nameMatch[2];
                 lastName = nameMatch[3];
+            } else {
+                // Try individual field patterns
+                const fnMatch = text.match(thaiNamePatterns[1]);
+                const lnMatch = text.match(thaiNamePatterns[2]);
+                if (fnMatch) firstName = fnMatch[1];
+                if (lnMatch) lastName = lnMatch[1];
             }
 
             if (idCardNumber || firstName) {
-                if (idCardNumber) handleIdCardChange({ target: { value: idCardNumber } } as any);
+                if (idCardNumber && idCardNumber.length === 13) {
+                    handleIdCardChange({ target: { value: idCardNumber } } as any);
+                }
                 if (prefix) handleSelectChange('prefix', prefix);
                 if (firstName) handleChange({ target: { name: 'firstName', value: firstName } } as any);
                 if (lastName) handleChange({ target: { name: 'lastName', value: lastName } } as any);
 
                 toast.success("ดึงข้อมูลจากบัตรสำเร็จ กรุณาตรวจสอบความถูกต้อง");
-                setTimeout(() => setStep(2), 1500); // Auto go to next step
+                setTimeout(() => setStep(2), 1500);
             } else {
                 toast.error("อ่านข้อมูลไม่สำเร็จ กรุณากรอกข้อมูลด้วยตนเอง");
-                setTimeout(() => setStep(2), 1500); // Auto go to next step anyway
+                setTimeout(() => setStep(2), 1500);
             }
         } catch (err) {
             console.error("OCR Error:", err);
             toast.error("เกิดข้อผิดพลาดในการดึงข้อมูล กรุณากรอกด้วยตนเอง");
-            setTimeout(() => setStep(2), 1500); // Auto go to next step anyway
+            setTimeout(() => setStep(2), 1500);
         } finally {
             setIsOcrProcessing(false);
         }
@@ -249,7 +326,11 @@ export default function RegisterPage() {
             });
             const data = await res.json();
             if (res.ok) {
-                toast.success("ระบบได้ส่งรหัส OTP ไปยังอีเมลของคุณแล้ว");
+                if (data.emailWarning) {
+                    toast.warning(data.emailWarning);
+                } else {
+                    toast.success("ระบบได้ส่งรหัส OTP ไปยังอีเมลของคุณแล้ว");
+                }
                 setTempUserId(data.userId);
                 setStep(5);
             } else {
@@ -327,7 +408,7 @@ export default function RegisterPage() {
                     <>
                         <CardHeader className="text-center space-y-1 pb-3 border-b border-border/50">
                             <CardTitle className="text-xl font-bold tracking-tight">อัปโหลดบัตรประชาชน</CardTitle>
-                            <CardDescription className="text-xs">ถ่ายรูปบัตรประชาชนเพื่อให้ระบบกรอกข้อมูลเบื้องต้นให้คุณอัติโนมัติ</CardDescription>
+                            <CardDescription className="text-xs">ถ่ายรูปบัตรประชาชนเพื่อให้ระบบกรอกข้อมูลเบื้องต้นให้คุณอัตโนมัติ</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6 pt-5">
                             <div className="space-y-3">
@@ -682,7 +763,23 @@ export default function RegisterPage() {
                                 <p className="text-[10px] text-muted-foreground">
                                     ไม่ได้รับอีเมล? ตรวจสอบโฟลเดอร์ &quot;สแปม (Spam/Junk)&quot; ด้วย
                                 </p>
-                                <button type="button" onClick={() => handleRegister()} disabled={loading} className="text-xs text-primary hover:underline disabled:opacity-50">
+                                <button type="button" onClick={async () => {
+                                    setLoading(true);
+                                    try {
+                                        const res = await fetch('/api/auth/resend-otp', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ userId: tempUserId }),
+                                        });
+                                        const data = await res.json();
+                                        if (res.ok) {
+                                            toast.success('ส่งรหัส OTP ใหม่เรียบร้อยแล้ว');
+                                        } else {
+                                            toast.error(data.error || 'ไม่สามารถส่ง OTP ใหม่ได้');
+                                        }
+                                    } catch { toast.error('เกิดข้อผิดพลาดในการเชื่อมต่อ'); }
+                                    finally { setLoading(false); }
+                                }} disabled={loading} className="text-xs text-primary hover:underline disabled:opacity-50">
                                     ขอ OTP ใหม่อีกครั้ง
                                 </button>
                             </div>

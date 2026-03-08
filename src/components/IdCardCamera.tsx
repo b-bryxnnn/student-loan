@@ -20,22 +20,45 @@ export default function IdCardCamera({ onCapture, onCancel }: IdCardCameraProps)
     const startCamera = useCallback(async () => {
         try {
             setCameraError("");
-            const mediaStream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode: "environment",
-                    width: { ideal: 1920 },
-                    height: { ideal: 1080 }
-                },
+
+            // Enumerate devices to find the main (non-wide) back camera
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(d => d.kind === "videoinput");
+
+            // Try to find a back camera that is NOT the ultra-wide
+            // On most phones, the "main" back camera has a label without "wide" or "0.5"
+            let selectedDeviceId: string | undefined;
+            for (const device of videoDevices) {
+                const label = device.label.toLowerCase();
+                // Skip front cameras and ultra-wide cameras
+                if (label.includes("front") || label.includes("user")) continue;
+                if (label.includes("wide") || label.includes("ultra") || label.includes("0.5")) continue;
+                // Prefer cameras with "back", "rear", "environment", or generic names
+                if (label.includes("back") || label.includes("rear") || label.includes("environment") || !label.includes("front")) {
+                    selectedDeviceId = device.deviceId;
+                    break;
+                }
+            }
+
+            const constraints: MediaStreamConstraints = {
+                video: selectedDeviceId
+                    ? { deviceId: { exact: selectedDeviceId }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+                    : { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } },
                 audio: false,
-            });
+            };
+
+            const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
 
             // Try to set zoom to 1x to avoid 0.5x ultra-wide lens
             const track = mediaStream.getVideoTracks()[0];
             const capabilities = track.getCapabilities ? track.getCapabilities() : null;
             if (capabilities && (capabilities as any).zoom) {
+                const zoomCaps = (capabilities as any).zoom;
+                // Set to 1.0 if available, or to minimum if 1.0 is below min
+                const targetZoom = Math.max(zoomCaps.min || 1, 1);
                 try {
                     await track.applyConstraints({
-                        advanced: [{ zoom: 1 }] as any
+                        advanced: [{ zoom: targetZoom }] as any
                     });
                 } catch (e) {
                     console.log("Zoom constraint not supported", e);
@@ -76,7 +99,7 @@ export default function IdCardCamera({ onCapture, onCancel }: IdCardCameraProps)
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
         // Convert to base64
-        const base64 = canvas.toDataURL("image/jpeg", 0.8);
+        const base64 = canvas.toDataURL("image/jpeg", 0.85);
         setCapturedImage(base64);
 
         // Stop stream after capture
@@ -140,18 +163,18 @@ export default function IdCardCamera({ onCapture, onCancel }: IdCardCameraProps)
                         }}></div>
 
                         {/* ID Card Guide Frame */}
-                        <div className="absolute inset-[15%] rounded-xl border-2 border-white/70 border-dashed pointer-events-none flex flex-col justify-end p-2 pb-4">
+                        <div className="absolute inset-[12%] rounded-xl border-2 border-white/70 border-dashed pointer-events-none flex flex-col justify-end p-2 pb-4">
                             <div className="bg-black/50 backdrop-blur-sm self-center px-3 py-1.5 rounded-full">
                                 <p className="text-white text-xs text-center font-semibold">จัดบัตรประชาชนให้อยู่ในกรอบนี้</p>
-                                <p className="text-white/80 text-[10px] text-center mt-0.5">พยายามหลีกเลี่ยงแสงสะท้อนบนหน้าบัตร</p>
+                                <p className="text-white/80 text-[10px] text-center mt-0.5">ถ่ายในที่มีแสงสว่าง หลีกเลี่ยงแสงสะท้อน</p>
                             </div>
                         </div>
 
                         {/* Corner markers */}
-                        <div className="absolute top-[15%] left-[15%] w-8 h-8 border-t-4 border-l-4 border-white pointer-events-none rounded-tl-lg"></div>
-                        <div className="absolute top-[15%] right-[15%] w-8 h-8 border-t-4 border-r-4 border-white pointer-events-none rounded-tr-lg"></div>
-                        <div className="absolute bottom-[15%] left-[15%] w-8 h-8 border-b-4 border-l-4 border-white pointer-events-none rounded-bl-lg"></div>
-                        <div className="absolute bottom-[15%] right-[15%] w-8 h-8 border-b-4 border-r-4 border-white pointer-events-none rounded-br-lg"></div>
+                        <div className="absolute top-[12%] left-[12%] w-8 h-8 border-t-4 border-l-4 border-white pointer-events-none rounded-tl-lg"></div>
+                        <div className="absolute top-[12%] right-[12%] w-8 h-8 border-t-4 border-r-4 border-white pointer-events-none rounded-tr-lg"></div>
+                        <div className="absolute bottom-[12%] left-[12%] w-8 h-8 border-b-4 border-l-4 border-white pointer-events-none rounded-bl-lg"></div>
+                        <div className="absolute bottom-[12%] right-[12%] w-8 h-8 border-b-4 border-r-4 border-white pointer-events-none rounded-br-lg"></div>
 
                     </div>
                     <canvas ref={canvasRef} className="hidden" />

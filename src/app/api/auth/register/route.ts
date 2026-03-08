@@ -131,12 +131,16 @@ export async function POST(req: Request) {
             }
         });
 
-        // 5. ส่ง OTP Email (บังคับรอให้ส่งเสร็จ เพื่อให้แน่ใจว่าผู้ใช้ได้รับ)
+        // 5. ส่ง OTP Email
         const emailSent = await sendOTPEmail(email, otp);
         if (!emailSent) {
-            // ถ้าส่งอีเมลไม่สำเร็จ ให้ลบ user ที่สร้างชั่วคราวทิ้ง (หรือจะเก็บไว้ก็ระวังขยะ)
-            await db.user.delete({ where: { id: user.id } });
-            return NextResponse.json({ error: "ไม่สามารถส่งอีเมล OTP ได้ กรุณาตรวจสอบอีเมลหรือตั้งค่าระบบอีเมลให้ถูกต้อง" }, { status: 500 });
+            // อีเมลส่งไม่สำเร็จ แต่ไม่ลบ user เพราะผู้ใช้สามารถกด "ขอ OTP ใหม่" ได้
+            console.warn(`⚠️ ส่ง OTP email ไม่สำเร็จไปยัง ${email} — ผู้ใช้สามารถกดขอ OTP ใหม่ได้`);
+            return NextResponse.json({
+                success: true,
+                userId: user.id,
+                emailWarning: "ไม่สามารถส่งอีเมล OTP ได้ในขณะนี้ กรุณากดขอ OTP ใหม่อีกครั้ง"
+            }, { status: 201 });
         }
 
         return NextResponse.json({ success: true, userId: user.id }, { status: 201 });

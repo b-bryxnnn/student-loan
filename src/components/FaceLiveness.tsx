@@ -195,14 +195,13 @@ export default function FaceLiveness({ onComplete }: FaceLivenessProps) {
                 const faceHeight = jawBottom.y - noseBridge.y;
                 const pitchRatio = faceHeight > 0 ? noseToEyesDist / faceHeight : 0.5;
 
-                // ปรับ Threshold
-                // Center ต้องเป๊ะขึ้นนิดนึง
-                const isCenter = yawRatio > 0.65 && yawRatio < 1.35 && pitchRatio > 0.35 && pitchRatio < 0.65;
+                // ปรับ Threshold คืนให้กว้างขึ้น เพื่อให้ "มองตรง" ผ่านได้ง่ายเหมือนเดิม
+                const isCenter = yawRatio > 0.55 && yawRatio < 1.45 && pitchRatio > 0.30 && pitchRatio < 0.70;
                 // ลดความไวของการหันซ้ายขวา ต้องหันให้ชัดเจนขึ้น
                 const isLeft = yawRatio > 1.7;
                 const isRight = yawRatio < 0.55;
-                // เงยหน้าต้องเงยให้เยอะขึ้นนิดนึง
-                const isUp = pitchRatio < 0.25;
+                // เงยหน้าง่ายขึ้นนิดนึง
+                const isUp = pitchRatio < 0.30;
 
                 if (phaseRef.current === "capture") {
                     // Final center capture
@@ -345,40 +344,40 @@ export default function FaceLiveness({ onComplete }: FaceLivenessProps) {
     // Tips screen
     if (phase === "tips") {
         return (
-            <div className="text-center space-y-4 py-8 bg-white dark:bg-zinc-950 rounded-xl p-6 sm:p-8 shadow-xl border border-border">
-                <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center mx-auto mb-4">
-                    <Camera className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+            <div className="text-center space-y-4 py-8 bg-card rounded-xl p-6 sm:p-8 shadow-sm border">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                    <Camera className="w-8 h-8 text-primary" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">ระบบยืนยันตัวตนด้วยใบหน้า</h3>
+                <h3 className="text-xl font-bold text-foreground">ระบบยืนยันตัวตนด้วยใบหน้า</h3>
 
-                {/* Tips with absolute high contrast */}
-                <div className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 text-left space-y-4 max-w-sm mx-auto shadow-sm">
-                    <p className="text-sm font-bold text-blue-700 dark:text-blue-400 flex items-center gap-2 mb-2">
+                {/* Tips with brand-aligned styling */}
+                <div className="bg-muted/50 border rounded-xl p-5 text-left space-y-4 max-w-sm mx-auto shadow-sm">
+                    <p className="text-sm font-bold text-primary flex items-center gap-2 mb-2">
                         <Lightbulb className="w-5 h-5" /> คำแนะนำก่อนเริ่มสแกน
                     </p>
-                    <div className="space-y-4 text-sm text-slate-800 dark:text-slate-200 font-medium">
+                    <div className="space-y-4 text-sm text-foreground font-medium">
                         <p className="flex items-start gap-3">
-                            <span className="bg-white dark:bg-zinc-800 p-2 rounded-lg shadow-sm border border-slate-100 dark:border-zinc-700">
-                                <Glasses className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+                            <span className="bg-background p-2 rounded-lg shadow-sm border">
+                                <Glasses className="w-4 h-4 text-muted-foreground" />
                             </span>
-                            <span className="mt-1.5 leading-tight"><strong>โปรดถอดแว่นตา</strong><br /><span className="text-xs text-slate-500 dark:text-slate-400 font-normal">ป้องกันแสงสะท้อนจากเลนส์</span></span>
+                            <span className="mt-1.5 leading-tight"><strong>โปรดถอดแว่นตา</strong><br /><span className="text-xs text-muted-foreground font-normal">ป้องกันแสงสะท้อนจากเลนส์</span></span>
                         </p>
                         <p className="flex items-start gap-3">
-                            <span className="bg-white dark:bg-zinc-800 p-2 rounded-lg shadow-sm border border-slate-100 dark:border-zinc-700">
-                                <Sun className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+                            <span className="bg-background p-2 rounded-lg shadow-sm border">
+                                <Sun className="w-4 h-4 text-muted-foreground" />
                             </span>
-                            <span className="mt-1.5 leading-tight"><strong>อยู่ในที่สว่าง</strong><br /><span className="text-xs text-slate-500 dark:text-slate-400 font-normal">หลีกเลี่ยงเงามืดหรือการย้อนแสง</span></span>
+                            <span className="mt-1.5 leading-tight"><strong>อยู่ในที่สว่าง</strong><br /><span className="text-xs text-muted-foreground font-normal">หลีกเลี่ยงเงามืดหรือการย้อนแสง</span></span>
                         </p>
                         <p className="flex items-start gap-3">
-                            <span className="bg-white dark:bg-zinc-800 p-2 rounded-lg shadow-sm border border-slate-100 dark:border-zinc-700">
-                                <Camera className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+                            <span className="bg-background p-2 rounded-lg shadow-sm border">
+                                <Camera className="w-4 h-4 text-muted-foreground" />
                             </span>
-                            <span className="mt-1.5 leading-tight"><strong>ทำตามคำสั่งบนหน้าจอ</strong><br /><span className="text-xs text-slate-500 dark:text-slate-400 font-normal">เช่น หันซ้าย ขวา ก้ม หรือเงยหน้า</span></span>
+                            <span className="mt-1.5 leading-tight"><strong>ทำตามคำสั่งบนหน้าจอ</strong><br /><span className="text-xs text-muted-foreground font-normal">เช่น หันซ้าย ขวา ก้ม หรือเงยหน้า</span></span>
                         </p>
                     </div>
                 </div>
 
-                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-6 px-2 leading-relaxed">
+                <p className="text-xs text-muted-foreground max-w-sm mx-auto mt-6 px-2 leading-relaxed">
                     ข้อมูลประมวลผลบนเครื่องของคุณเพื่อความปลอดภัยสูงสุดและไม่ถ่ายโอนวิดีโอออกจากอุปกรณ์
                 </p>
 
@@ -465,13 +464,7 @@ export default function FaceLiveness({ onComplete }: FaceLivenessProps) {
                     className="w-full h-full object-cover scale-x-[-1]"
                 />
 
-                {/* Color flash overlay */}
-                {phase === "colorFlash" && colorFlashActive && (
-                    <div
-                        className="absolute inset-0 pointer-events-none transition-colors duration-200"
-                        style={{ backgroundColor: COLOR_SEQUENCE[colorIndex]?.color, opacity: 0.35 }}
-                    />
-                )}
+                {/* Color flash overlay is now FULL SCREEN (placed outside) */}
 
                 {/* Progress Ring */}
                 <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100">
@@ -529,6 +522,14 @@ export default function FaceLiveness({ onComplete }: FaceLivenessProps) {
                     }
                 </p>
             </div>
+
+            {/* FULL SCREEN Color Flash Overlay */}
+            {phase === "colorFlash" && colorFlashActive && (
+                <div
+                    className="fixed inset-0 z-[9999] pointer-events-none transition-colors duration-200 mix-blend-screen"
+                    style={{ backgroundColor: COLOR_SEQUENCE[colorIndex]?.color, opacity: 0.85 }}
+                />
+            )}
         </div>
     );
 }

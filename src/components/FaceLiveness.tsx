@@ -4,14 +4,13 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Camera, CheckCircle2, RotateCcw, Loader2, AlertCircle, Glasses, Sun, Lightbulb } from "lucide-react";
 
-type Direction = "CENTER" | "LEFT" | "RIGHT" | "UP" | "DOWN";
+type Direction = "CENTER" | "LEFT" | "RIGHT" | "UP";
 
 const CHALLENGES: { dir: Direction; label: string; instruction: string }[] = [
     { dir: "CENTER", label: "มองตรงกล้อง", instruction: "มองตรงกล้อง" },
     { dir: "LEFT", label: "หันซ้าย", instruction: "ค่อยๆ หันหน้าไปทางซ้าย" },
     { dir: "RIGHT", label: "หันขวา", instruction: "ค่อยๆ หันหน้าไปทางขวา" },
     { dir: "UP", label: "เงยหน้า", instruction: "ค่อยๆ เงยหน้าขึ้นเล็กน้อย" },
-    { dir: "DOWN", label: "ก้มหน้า", instruction: "ค่อยๆ ก้มหน้าลงเล็กน้อย" },
 ];
 
 // Color flash for liveness: show colors, check face is still present
@@ -196,12 +195,14 @@ export default function FaceLiveness({ onComplete }: FaceLivenessProps) {
                 const faceHeight = jawBottom.y - noseBridge.y;
                 const pitchRatio = faceHeight > 0 ? noseToEyesDist / faceHeight : 0.5;
 
-                // ปรับ threshold ให้ง่ายขึ้นมากๆ (โดยเฉพาะ UP/DOWN เวลาก้มหน้า)
-                const isCenter = yawRatio > 0.55 && yawRatio < 1.55 && pitchRatio > 0.20 && pitchRatio < 0.75;
-                const isLeft = yawRatio > 1.35;
-                const isRight = yawRatio < 0.65;
-                const isUp = pitchRatio < 0.35;    // ง่ายขึ้นมากๆ (สะบัดนิดเดียวผ่าน)
-                const isDown = pitchRatio > 0.55;  // ง่ายขึ้นมากๆ สำหรับการก้มหน้า
+                // ปรับ Threshold
+                // Center ต้องเป๊ะขึ้นนิดนึง
+                const isCenter = yawRatio > 0.65 && yawRatio < 1.35 && pitchRatio > 0.35 && pitchRatio < 0.65;
+                // ลดความไวของการหันซ้ายขวา ต้องหันให้ชัดเจนขึ้น
+                const isLeft = yawRatio > 1.7;
+                const isRight = yawRatio < 0.55;
+                // เงยหน้าต้องเงยให้เยอะขึ้นนิดนึง
+                const isUp = pitchRatio < 0.25;
 
                 if (phaseRef.current === "capture") {
                     // Final center capture
@@ -240,7 +241,6 @@ export default function FaceLiveness({ onComplete }: FaceLivenessProps) {
                     if (currentChallenge === "LEFT" && isLeft) pass = true;
                     if (currentChallenge === "RIGHT" && isRight) pass = true;
                     if (currentChallenge === "UP" && isUp) pass = true;
-                    if (currentChallenge === "DOWN" && isDown) pass = true;
 
                     if (pass) {
                         if (!holdStartRef.current) holdStartRef.current = Date.now();

@@ -16,57 +16,73 @@ interface IdCardOcrProps {
     onResult: (result: OcrResult) => void;
 }
 
+// แก้ปัญหา Tesseract อ่านตัวเลขผิดบ่อย (เช่น 5 เป็น 6, b เป็น 6, O เป็น 0)
+function cleanNumberText(text: string): string {
+    return text
+        .replace(/[oO]/g, '0')
+        .replace(/[iIlL|]/g, '1')
+        .replace(/[zZ]/g, '2')
+        .replace(/[sS]/g, '5')
+        .replace(/[b]/g, '6')
+        .replace(/[B]/g, '8')
+        .replace(/[gq]/g, '9')
+        .replace(/๕/g, '5')
+        .replace(/๖/g, '6');
+}
+
 // ดึงเฉพาะตัวเลข 13 หลักติดกัน
 function extractIdCard(text: string): string | undefined {
-    // ลองหาเลข 13 หลักติดกัน
-    const m13 = text.replace(/\s/g, '').match(/\d{13}/);
+    // ขั้นแรก คลีนเฉพาะอักขระที่ชอบอ่านผิดให้กลายเป็นตัวเลขก่อน
+    const cleanedText = cleanNumberText(text).replace(/\s|-|\./g, '');
+
+    // ค้นหาตัวเลข 13 หลัก (มักขึ้นต้นด้วย 1-9)
+    const m13 = cleanedText.match(/[1-9]\d{12}/);
     if (m13) return m13[0];
 
-    // ลองหาเลขบัตรที่มี space/dash คั่น เช่น 1-1234-56789-01-2
-    const segments = text.match(/\d[\d\s\-\.]{14,18}\d/g);
-    if (segments) {
-        for (const seg of segments) {
-            const digits = seg.replace(/\D/g, '');
-            if (digits.length === 13) return digits;
-        }
-    }
     return undefined;
 }
 
-// ดึงชื่อ-นามสกุลจากข้อความภาษาไทย
+// คลีนตัวอักษรไทยที่ Tesseract ชอบอ่านผิด
+function cleanThaiText(text: string): string {
+    return text.replace(/เเ/g, 'แ').replace(/ำ/g, 'ำ').trim();
+}
+
+// ดึงคำนำหน้า ชื่อ-นามสกุล
 function extractThaiName(text: string): { prefix?: string; firstName?: string; lastName?: string } {
-    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    const lines = text.split('\n').map(l => cleanThaiText(l)).filter(Boolean);
+
+    // List คำนำหน้าที่เจอบ่อย
+    const prefixes = ["นาย", "นางสาว", "นาง", "ด.ช.", "ด.ญ.", "เด็กชาย", "เด็กหญิง", "น.ส.", "น.ส"];
 
     for (const line of lines) {
-        // หาบรรทัดที่มี คำนำหน้า + ชื่อ + นามสกุล
-        const prefixMatch = line.match(/(นาย|นางสาว|นาง|ด\.ช\.|ด\.ญ\.|เด็กชาย|เด็กหญิง)\s*(.+)/);
-        if (prefixMatch) {
-            let prefix = prefixMatch[1];
-            // normalize
-            if (prefix === 'เด็กชาย') prefix = 'ด.ช.';
-            if (prefix === 'เด็กหญิง') prefix = 'ด.ญ.';
+        // หาบรรทัดที่มี คำนำหน้า + ชื่อ + นามสกุล หรือ "ชื่อตัวและชื่อสกุล"
+        // บางครั้ง Tesseract อ่านเป็น "ชือตัวและชือสกุล" หรือ "Name"
+        let cleanLine = line.replace(/^(?:ชื่อตัวและชื่อสกุล|ชือตัวและชือสกุล|ชื่อ|Name)\s*/i, '').trim();
+        cleanLine = cleanLine.replace(/^(?:Thai Name)\s*/i, '').trim();
 
-            const rest = prefixMatch[2].trim();
-            const parts = rest.split(/\s+/);
-            if (parts.length >= 2) {
-                return {
-                    prefix,
-                    firstName: parts[0],
-                    lastName: parts.slice(1).join(' '),
-                };
-            } else if (parts.length === 1) {
-                return { prefix, firstName: parts[0] };
-            }
-        }
-    }
+        for (const pref of prefixes) {
+            if (cleanLine.startsWith(pref)) {
+                let prefix = pref;
+                if (prefix === 'เด็กชาย') prefix = 'ด.ช.';
+                if (prefix === 'เด็กหญิง') prefix = 'ด.ญ.';
+                if (prefix === 'น.ส.' || prefix === 'น.ส') prefix = 'นางสาว';
 
-    // Fallback: หา "ชื่อ" หรือ "Name" label
-    for (const line of lines) {
-        const nameLabel = line.match(/(?:ชื่อ|Name|ชื่อตัวและชื่อสกุล)\s*(.+)/i);
-        if (nameLabel) {
-            const parts = nameLabel[1].trim().split(/\s+/);
-            if (parts.length >= 2) {
-                return { firstName: parts[0], lastName: parts.slice(1).join(' ') };
+                // หั่นส่วนที่เหลือออกมา
+                let rest = cleanLine.substring(pref.length).trim();
+
+                // ถอดนามสกุลภาษาอังกฤษออก (ถ้าอ่านติดมาด้วย เช่น "นายสมชาย ใจดี Somchai Jaidee")
+                rest = rest.replace(/[a-zA-Z].*$/, '').trim();
+
+                const parts = rest.split(/\s+/).filter(p => p.length > 0);
+                if (parts.length >= 2) {
+                    return {
+                        prefix,
+                        firstName: parts[0],
+                        lastName: parts.slice(1).join(' '),
+                    };
+                } else if (parts.length === 1) {
+                    return { prefix, firstName: parts[0] };
+                }
             }
         }
     }

@@ -5,8 +5,54 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { db } from '@/lib/db';
+import { Metadata } from 'next';
+
+// 1. ตั้งค่า Metadata สำหรับหน้า Homepage เพื่อ SEO และการแชร์บนโซเชียลมีเดีย
+export const metadata: Metadata = {
+  title: 'ระบบส่งเอกสาร กยศ. ออนไลน์ - โรงเรียนรัตนโกสินทร์สมโภชลาดกระบัง (กยศ.รส.ล)',
+  description: 'ช่องทางหลักในการส่งเอกสาร กยศ รสล แบบออนไลน์ ตรวจสอบสถานะและจัดการเอกสารเงินกู้ยืมเพื่อการศึกษา โรงเรียนรัตนโกสินทร์สมโภชลาดกระบัง รวดเร็วและปลอดภัย',
+  keywords: ['กยศ.รส.ล', 'กยศ รสล', 'ส่งเอกสาร กยศ รสล', 'ส่งเอกสารกยศ ออนไลน์', 'กยศ. โรงเรียนรัตนโกสินทร์สมโภชลาดกระบัง'],
+  alternates: {
+    canonical: 'https://กยศ.rslhub.me', // แจ้งบอทให้รู้ว่า URL หลักคืออะไร
+  },
+  openGraph: {
+    title: 'ระบบส่งเอกสาร กยศ. ออนไลน์ (กยศ.รส.ล) - โรงเรียนรัตนโกสินทร์สมโภชลาดกระบัง',
+    description: 'ระบบจัดการและส่งเอกสาร กยศ ออนไลน์ สำหรับนักเรียนโรงเรียนรัตนโกสินทร์สมโภชลาดกระบัง (กยศ รสล) สะดวก รวดเร็ว',
+    url: 'https://กยศ.rslhub.me', // ข้อควรระวัง: หากเปลี่ยนโดเมน อย่าลืมมาอัปเดตตรงนี้ด้วย
+    siteName: 'กยศ. รส.ล.',
+    images: [
+      {
+        url: 'https://กยศ.rslhub.me/og-image.jpg', // ทริค: ควรออกแบบรูปปกเว็บขนาด 1200x630 ไปวางในโฟลเดอร์ public/og-image.jpg จะสวยที่สุดเมื่อแชร์ลิงก์
+        width: 1200,
+        height: 630,
+        alt: 'ระบบส่งเอกสาร กยศ. รส.ล.',
+      },
+    ],
+    locale: 'th_TH',
+    type: 'website',
+  },
+};
 
 export default async function Home() {
+  // 2. สร้างตัวแปร JSON-LD Structured Data ชนิด WebApplication เพื่อระบุว่านี่คือเว็บแอปพลิเคชัน ไม่ใช่เว็บบล็อกทั่วไป
+  // เพื่อแก้ปัญหา 'No items detected' ใน Rich Results Test จากทาง Google
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: 'ระบบรับเอกสาร กยศ. เบื้องต้น โรงเรียนรัตนโกสินทร์สมโภชลาดกระบัง',
+    alternateName: ['กยศ.รส.ล', 'กยศ รสล', 'ส่งเอกสาร กยศ รสล'], // ใส่คีย์เวิร์ดที่นักเรียนชอบค้นหาเข้าไปตรงนี้
+    url: 'https://กยศ.rslhub.me',
+    applicationCategory: 'EducationalApplication',
+    operatingSystem: 'All',
+    description: 'ระบบจัดการและส่งเอกสารเงินกู้ยืมเพื่อการศึกษา (กยศ.) รูปแบบออนไลน์ สำหรับนักเรียนโรงเรียนรัตนโกสินทร์สมโภชลาดกระบัง เพื่อความสะดวกและปลอดภัย',
+    provider: {
+      '@type': 'School',
+      name: 'โรงเรียนรัตนโกสินทร์สมโภชลาดกระบัง',
+      alternateName: 'รส.ล.',
+      url: 'https://www.rsl.ac.th' // ข้อควรระวัง: เปลี่ยนเป็นเว็บหลักจริงของโรงเรียนได้ถ้าจำเป็น
+    }
+  };
+
   // ดึงประกาศล่าสุดที่ยังเปิดอยู่
   const announcements = await db.announcement.findMany({
     where: { isActive: true },
@@ -29,6 +75,12 @@ export default async function Home() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] relative overflow-hidden flex flex-col">
+      {/* 3. นำ JSON-LD มาฝังลงใน Script Tag เพื่อให้หน้าเว็บทำการ render ข้อมูล Schema ให้ Google Bot มองเห็นอย่างสมบูรณ์ */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       {/* Decorative Shapes */}
       <div className="absolute top-0 right-0 -translate-y-1/4 translate-x-1/4 w-[600px] h-[600px] bg-primary/4 rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute bottom-0 left-0 translate-y-1/4 -translate-x-1/4 w-[500px] h-[500px] bg-warning/5 rounded-full blur-[120px] pointer-events-none" />

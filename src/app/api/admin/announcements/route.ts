@@ -101,8 +101,9 @@ export async function POST(req: Request) {
 
                 sendEmail(
                     student.email,
-                    `📢 ประกาศ กยศ.: ${title}`,
-                    emailHtml
+                    `ประกาศ กยศ.: ${title}`,
+                    emailHtml,
+                    `ประกาศ กยศ.: ${title}\n\n${content}\n\n---\nงาน กยศ. โรงเรียนรัตนโกสินทร์สมโภชลาดกระบัง`
                 ).then(() => { emailSentCount++; }).catch(console.error);
             }
         }

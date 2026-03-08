@@ -74,7 +74,7 @@ export async function POST(req: Request) {
                 `;
 
         // Fire and forget email (don't block the loop if one fails)
-        sendEmail(doc.user.email, `เอกสาร ${docTypeName} กยศ. ของคุณต้องแก้ไข`, emailHtml).catch(console.error);
+        sendEmail(doc.user.email, `เอกสาร ${docTypeName} กยศ. ของคุณต้องแก้ไข`, emailHtml, `เอกสาร ${docTypeName} ของคุณไม่ผ่านการตรวจสอบ\n\nเหตุผล: ${remark}\nกำหนดแก้ไขภายใน: ${deadlineText}\n\nกรุณาเข้าสู่ระบบเพื่ออัปโหลดเอกสารใหม่`).catch(console.error);
 
       } else if (action === 'MARK_RECEIVED') {
         updateData.originalReceived = true;

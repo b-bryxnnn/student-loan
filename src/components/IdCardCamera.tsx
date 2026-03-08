@@ -17,55 +17,55 @@ export default function IdCardCamera({ onCapture, onCancel }: IdCardCameraProps)
     const [capturedImage, setCapturedImage] = useState<string | null>(null);
     const [cameraError, setCameraError] = useState("");
 
-    const startCamera = useCallback(async () => {
+    // Lens switcher states
+    const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>([]);
+    const [activeDeviceId, setActiveDeviceId] = useState<string | undefined>();
+    const initCameraRan = useRef(false);
+
+    const startCamera = useCallback(async (deviceId?: string) => {
         try {
             setCameraError("");
 
             // ============================================================
-            // กลยุทธ์: ขอกล้อง environment + ความละเอียดสูง
-            //
-            // ปัญหา: มือถือหลายรุ่น (Samsung, Xiaomi, etc.) จะเปิดเลนส์
-            // ultra-wide (0.5x) เมื่อขอ facingMode: "environment"
-            //
-            // วิธีแก้:
-            //  1. ใช้ enumerateDevices() เพื่อหาเลนส์หลัก (ไม่ใช่ wide)
-            //  2. ตั้ง zoom constraint เป็น 2.0 (เท่ากับ 1x จริง)
-            //  3. ถ้า zoom ไม่ได้ ก็ crop center ของ video แทน
+            // กลยุทธ์ใหม่: ให้ผู้ใช้เลือกเลนส์เองได้หากภาพไม่ชัด (สลับกล้อง)
             // ============================================================
 
-            let selectedDeviceId: string | undefined;
+            let selectedDeviceId = deviceId;
 
-            try {
-                // ขอ permission ก่อนเพื่อให้ได้ label
-                const tempStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                tempStream.getTracks().forEach(t => t.stop());
+            // ถ้าไม่มีกำหนด deviceId มา ให้หาเองครั้งแรก
+            if (!selectedDeviceId) {
+                try {
+                    // ขอ permission ก่อน
+                    const tempStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                    tempStream.getTracks().forEach(t => t.stop());
 
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoDevices = devices.filter(d => d.kind === "videoinput");
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    const videoDevices = devices.filter(d => d.kind === "videoinput");
 
-                // หากล้องที่ไม่ใช่ ultra-wide
-                // ลำดับความสำคัญ: กล้องที่มี label "back" หรือ "rear" แต่ไม่มี "wide", "ultra", "0.5"
-                const backCameras = videoDevices.filter(d => {
-                    const l = d.label.toLowerCase();
-                    return !l.includes("front") && !l.includes("user");
-                });
+                    // Filter เอาแต่กล้องหลัง
+                    const backCameras = videoDevices.filter(d => {
+                        const l = d.label.toLowerCase();
+                        return !l.includes("front") && !l.includes("user");
+                    });
 
-                // หากล้อง back ที่ไม่ใช่ wide
-                const nonWideback = backCameras.filter(d => {
-                    const l = d.label.toLowerCase();
-                    return !l.includes("wide") && !l.includes("ultra") && !l.includes("0.5") && !l.includes("macro");
-                });
+                    // เซฟเก็บไว้ให้ผู้ใช้กดสลับสลับได้
+                    setAvailableCameras(backCameras.length > 0 ? backCameras : videoDevices);
 
-                if (nonWideback.length > 0) {
-                    // ใช้ตัวแรก (มักเป็นกล้องหลัก 1x)
-                    selectedDeviceId = nonWideback[0].deviceId;
-                } else if (backCameras.length > 1) {
-                    // ถ้ามี back camera หลายตัว ลองใช้ตัวที่ 2 (index 1)
-                    // เพราะตัวแรกมักเป็น wide
-                    selectedDeviceId = backCameras[1].deviceId;
+                    // พยายามหากล้องที่ไม่ใช่ ultra-wide เป็นค่าเริ่มต้น
+                    const nonWideback = backCameras.filter(d => {
+                        const l = d.label.toLowerCase();
+                        return !l.includes("wide") && !l.includes("ultra") && !l.includes("0.5") && !l.includes("macro");
+                    });
+
+                    if (nonWideback.length > 0) {
+                        selectedDeviceId = nonWideback[0].deviceId;
+                    } else if (backCameras.length > 0) {
+                        // ถ้าไม่มีให้เลือกตัวแรกที่เจอ
+                        selectedDeviceId = backCameras[0].deviceId;
+                    }
+                } catch {
+                    // Fallback to constraints
                 }
-            } catch {
-                // ถ้า enumerate ไม่ได้ ข้ามไป ใช้ default
             }
 
             const constraints: MediaStreamConstraints = {
@@ -76,7 +76,7 @@ export default function IdCardCamera({ onCapture, onCancel }: IdCardCameraProps)
                         height: { ideal: 1080 },
                     }
                     : {
-                        facingMode: { exact: "environment" },
+                        facingMode: { ideal: "environment" },
                         width: { ideal: 1920 },
                         height: { ideal: 1080 },
                     },
@@ -85,44 +85,48 @@ export default function IdCardCamera({ onCapture, onCancel }: IdCardCameraProps)
 
             const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
 
-            // พยายามตั้ง zoom เพื่อให้ได้มุมมอง 1x
-            const track = mediaStream.getVideoTracks()[0];
-            const capabilities = track.getCapabilities ? track.getCapabilities() : null;
-            if (capabilities && (capabilities as any).zoom) {
-                const zoomCaps = (capabilities as any).zoom;
-                // ถ้ามือถือ default เป็น 0.5x ค่า zoom min มักเป็น 1.0 แต่จริงๆ 1.0 คือ 0.5x
-                // เราต้องตั้ง zoom เป็น 2.0 เพื่อให้ได้ 1x จริง
-                // แต่ถ้า zoom min = 1.0 และ max > 2.0 → ตั้ง 2.0
-                // ถ้า zoom min >= 2.0 → ตั้ง min
-                const targetZoom = Math.min(zoomCaps.max || 2, Math.max(2, zoomCaps.min || 1));
-                try {
-                    await track.applyConstraints({
-                        advanced: [{ zoom: targetZoom } as any]
-                    });
-                    console.log(`Camera zoom set to ${targetZoom}x`);
-                } catch (e) {
-                    console.log("Zoom constraint failed:", e);
-                }
-            }
-
+            setActiveDeviceId(selectedDeviceId);
             setStream(mediaStream);
             if (videoRef.current) {
                 videoRef.current.srcObject = mediaStream;
             }
         } catch (err) {
             console.error("Camera error:", err);
-            setCameraError("ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตให้ใช้งานกล้อง หรือใช้การอัปโหลดรูปแทน");
+            setCameraError("ไม่สามารถเปิดกล้องได้ กรุณาให้แอพเข้าถึงกล้องก่อน");
         }
     }, []);
 
     useEffect(() => {
-        startCamera();
+        if (!initCameraRan.current) {
+            initCameraRan.current = true;
+            startCamera();
+        }
         return () => {
             if (stream) {
                 stream.getTracks().forEach((track) => track.stop());
             }
         };
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const switchLens = () => {
+        if (availableCameras.length <= 1) return;
+
+        // Find current index
+        const currentIndex = availableCameras.findIndex(c => c.deviceId === activeDeviceId);
+        // Next index
+        const nextIndex = (currentIndex + 1) % availableCameras.length;
+        const nextDeviceId = availableCameras[nextIndex].deviceId;
+
+        // Stop current
+        if (stream) {
+            stream.getTracks().forEach(t => t.stop());
+            setStream(null);
+        }
+
+        // Start next
+        startCamera(nextDeviceId);
+        toast.info(`สลับกล้องเลนส์ที่ ${nextIndex + 1}/${availableCameras.length}`);
+    };
 
     const handleCapture = () => {
         if (!videoRef.current || !canvasRef.current) return;
@@ -225,6 +229,21 @@ export default function IdCardCamera({ onCapture, onCancel }: IdCardCameraProps)
                         </p>
                     </div>
                 </div>
+
+                {/* Switch Lens Button overlay */}
+                {availableCameras.length > 1 && (
+                    <div className="absolute top-4 right-4 z-20">
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            className="bg-black/50 text-white hover:bg-black/70 backdrop-blur-md rounded-full shadow-lg h-9 font-medium border-white/20"
+                            onClick={switchLens}
+                        >
+                            <Camera className="w-4 h-4 mr-2" /> สลับเลนส์ ({availableCameras.findIndex(c => c.deviceId === activeDeviceId) + 1}/{availableCameras.length})
+                        </Button>
+                    </div>
+                )}
+
                 <video
                     ref={videoRef}
                     autoPlay

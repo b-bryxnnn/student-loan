@@ -105,13 +105,15 @@ export default function FaceLiveness({ onComplete }: FaceLivenessProps) {
         if (!modelsLoaded) return;
         try {
             setError("");
+            // Simplied constraints to maximize compatibility.
             const mediaStream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+                video: { facingMode: "user" },
                 audio: false,
             });
             setStream(mediaStream);
-        } catch {
-            setError("ไม่สามารถเปิดกล้องได้ กรุณาให้สิทธิ์เข้าถึงหรือใช้เบราว์เซอร์อื่น");
+        } catch (err) {
+            console.error("FaceLiveness camera error:", err);
+            setError("ไม่สามารถเปิดกล้องหน้าได้ กรุณาให้สิทธิ์เข้าถึงกล้อง (Allow Camera) หรือตรวจสอบตั้งค่าเบราว์เซอร์");
         }
     }, [modelsLoaded]);
 
@@ -343,36 +345,41 @@ export default function FaceLiveness({ onComplete }: FaceLivenessProps) {
     // Tips screen
     if (phase === "tips") {
         return (
-            <div className="text-center space-y-4 py-4 bg-muted/20 border border-border/50 rounded-xl p-6">
-                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                    <Camera className="w-8 h-8 text-primary" />
+            <div className="text-center space-y-4 py-8 bg-card border shadow-lg rounded-xl p-6 sm:p-8">
+                <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center mx-auto mb-4">
+                    <Camera className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                 </div>
-                <p className="text-sm font-semibold">ระบบ AI สแกนใบหน้าอัตโนมัติ</p>
+                <h3 className="text-xl font-bold text-card-foreground">ระบบยืนยันตัวตนด้วยใบหน้า</h3>
 
-                {/* Tips */}
-                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 text-left space-y-2.5 max-w-sm mx-auto">
-                    <p className="text-xs font-semibold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
-                        <Lightbulb className="w-4 h-4" /> คำแนะนำก่อนเริ่มสแกน
+                {/* Tips with high contrast */}
+                <div className="bg-white dark:bg-slate-900 border-2 border-primary/20 rounded-xl p-5 text-left space-y-3 max-w-sm mx-auto shadow-sm">
+                    <p className="text-sm font-bold text-primary flex items-center gap-2 mb-3">
+                        <Lightbulb className="w-5 h-5" /> คำแนะนำก่อนเริ่มสแกน
                     </p>
-                    <div className="space-y-1.5 text-xs text-amber-700 dark:text-amber-400">
-                        <p className="flex items-start gap-2">
-                            <Glasses className="w-4 h-4 shrink-0 mt-0.5" />
-                            <span><strong>ถอดแว่นตา</strong> เพื่อป้องกันแสงสะท้อนจากเลนส์ที่อาจรบกวนการตรวจจับ</span>
+                    <div className="space-y-3 text-sm text-foreground/90">
+                        <p className="flex items-start gap-3">
+                            <span className="bg-muted p-1.5 rounded-md text-foreground">
+                                <Glasses className="w-4 h-4" />
+                            </span>
+                            <span className="mt-1"><strong>โปรดถอดแว่นตา</strong> ป้องกันแสงสะท้อน</span>
                         </p>
-                        <p className="flex items-start gap-2">
-                            <Sun className="w-4 h-4 shrink-0 mt-0.5" />
-                            <span><strong>อยู่ในที่สว่างเพียงพอ</strong> หลีกเลี่ยงแสงย้อนจากด้านหลังหรือที่มืดเกินไป</span>
+                        <p className="flex items-start gap-3">
+                            <span className="bg-muted p-1.5 rounded-md text-foreground">
+                                <Sun className="w-4 h-4" />
+                            </span>
+                            <span className="mt-1"><strong>อยู่ในที่สว่าง</strong> หลีกเลี่ยงเงามืดหรือการย้อนแสง</span>
                         </p>
-                        <p className="flex items-start gap-2">
-                            <Camera className="w-4 h-4 shrink-0 mt-0.5" />
-                            <span><strong>จัดหน้าให้อยู่กลางกรอบ</strong> และค่อยๆ ทำตามคำสั่ง (หันซ้าย, ขวา, เงย, ก้ม)</span>
+                        <p className="flex items-start gap-3">
+                            <span className="bg-muted p-1.5 rounded-md text-foreground">
+                                <Camera className="w-4 h-4" />
+                            </span>
+                            <span className="mt-1"><strong>จัดหน้าตรง</strong> และค่อยๆ ทำตามคำสั่งบนหน้าจอ</span>
                         </p>
                     </div>
                 </div>
 
-                <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
-                    ระบบจะตรวจสอบการมีชีวิตโดยให้หันหน้าตามคำสั่ง จากนั้นจะมีการทดสอบแสงสี
-                    แล้วจึงถ่ายภาพใบหน้าตรงอัตโนมัติ (ข้อมูลประมวลผลบนเบราว์เซอร์ ปลอดภัย 100%)
+                <p className="text-xs text-muted-foreground max-w-sm mx-auto mt-4 px-2">
+                    ข้อมูลจะถูกประมวลผลบนเครื่องของคุณเพื่อความปลอดภัยสูงสุดและไม่ถ่ายโอนวิดีโอออกจากอุปกรณ์
                 </p>
 
                 {error && <p className="text-xs text-destructive flex justify-center items-center gap-1"><AlertCircle className="w-3 h-3" /> {error}</p>}
@@ -501,9 +508,9 @@ export default function FaceLiveness({ onComplete }: FaceLivenessProps) {
                 <div className="absolute inset-x-0 bottom-[15%] flex justify-center">
                     <div className="bg-black/60 backdrop-blur-sm px-4 py-1.5 rounded-full border border-white/10">
                         <p className={`text-xs font-bold tracking-wide ${phase === "capture" ? 'text-amber-400'
-                                : phase === "colorFlash" ? 'text-purple-300'
-                                    : holdProgress > 60 ? 'text-green-400'
-                                        : 'text-white'
+                            : phase === "colorFlash" ? 'text-purple-300'
+                                : holdProgress > 60 ? 'text-green-400'
+                                    : 'text-white'
                             }`}>
                             {progressStatus}
                         </p>

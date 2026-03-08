@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { FileText, FileSignature, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
+import { FileText, FileSignature, AlertCircle, CheckCircle2, Clock, ClipboardList, Download, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 
@@ -22,36 +22,104 @@ export default async function DashboardPage() {
 
     if (!user) redirect('/login');
 
-    const hasLoanRequest = user.loanRequests.length > 0;
+    const loanRequest = user.loanRequests[0]; // สมมติว่ามีแค่ 1 อันล่าสุด
+    const hasLoanRequest = !!loanRequest;
     const isNewBorrower = user.borrowerType === 'NEW';
+    const contractDoc = user.documents.find((d: any) => d.type === 'CONTRACT');
+    const confirmDoc = user.documents.find((d: any) => d.type === 'CONFIRMATION');
+
+    // คำนวณ step ปัจจุบัน (1-6)
+    let currentStep = 1;
+    if (isNewBorrower && !hasLoanRequest) {
+        currentStep = 1; // รอแบบคำขอกู้ยืม
+    } else if (isNewBorrower && hasLoanRequest && !contractDoc) {
+        currentStep = 3; // รอส่งสัญญา
+    } else if (!confirmDoc) {
+        currentStep = 3; // รอส่งแบบยืนยัน
+    } else {
+        // ส่งเอกสารแล้ว รอตรวจ
+        const allDocs = isNewBorrower ? [contractDoc, confirmDoc] : [confirmDoc];
+        const hasRejected = allDocs.some(d => d?.status === 'REJECTED');
+        const hasPending = allDocs.some(d => d?.status === 'PENDING');
+        const allCentral = allDocs.every(d => d?.sentToCentral);
+        const allReceived = allDocs.every(d => d?.originalReceived || d?.sentToCentral);
+
+        if (hasRejected) currentStep = 6;
+        else if (allCentral || allReceived) currentStep = 5;
+        else if (hasPending) currentStep = 4;
+        else currentStep = 4;
+    }
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">ยินดีต้อนรับ, {user.prefix}{user.firstName} {user.lastName}</h1>
-                <p className="text-muted-foreground mt-2">
+                <p className="text-muted-foreground mt-2 mb-6">
                     นี่คือหน้าจัดการระบบกู้ยืมเงิน กยศ. ของคุณ ({isNewBorrower ? "ผู้กู้รายใหม่" : "ผู้กู้รายเก่า"})
                 </p>
+                <DashboardStepper currentStep={currentStep} />
             </div>
 
-            {/* Requires Loan Request Form for New Borrowers */}
-            {isNewBorrower && !hasLoanRequest && (
-                <div className="bg-warning/10 border-l-4 border-warning p-6 rounded-lg shadow-sm">
-                    <div className="flex items-start gap-4">
-                        <AlertCircle className="w-6 h-6 text-warning shrink-0 mt-1" />
-                        <div>
-                            <h3 className="text-lg font-semibold text-warning-foreground">คุณยังไม่ได้กรอกแบบฟอร์มคำขอกู้ยืมเงินเบื้องต้น</h3>
-                            <p className="text-muted-foreground mt-1 mb-4">
-                                ในฐานะผู้กู้รายใหม่ คุณจำเป็นต้องกรอกประวัติการศึกษาและแนบไฟล์ ปพ.1 เพื่อขออนุมัติเบื้องต้นก่อนส่งแบบยืนยันและสัญญา
-                            </p>
-                            <Link href="/dashboard/loan-request">
-                                <Button className="shadow-lg hover-lift hover:scale-[1.02] transition-transform">
-                                    <FileText className="w-4 h-4 mr-2" />
-                                    กรอกคำขอกู้ยืมเงิน
-                                </Button>
-                            </Link>
+            {/* Loan Request Status for New Borrowers */}
+            {isNewBorrower && (
+                <div className="mb-6">
+                    {!hasLoanRequest ? (
+                        <div className="bg-warning/10 border-l-4 border-warning p-6 rounded-lg shadow-sm">
+                            <div className="flex items-start gap-4">
+                                <AlertCircle className="w-6 h-6 text-warning shrink-0 mt-1" />
+                                <div>
+                                    <h3 className="text-lg font-semibold text-warning-foreground">คุณยังไม่ได้กรอกแบบฟอร์มคำขอกู้ยืมเงินเบื้องต้น</h3>
+                                    <p className="text-muted-foreground mt-1 mb-4">
+                                        ในฐานะผู้กู้รายใหม่ คุณจำเป็นต้องกรอกประวัติการศึกษาและแนบไฟล์ ปพ.1 เพื่อขออนุมัติเบื้องต้นก่อนส่งแบบยืนยันและสัญญา
+                                    </p>
+                                    <Link href="/dashboard/loan-request">
+                                        <Button className="shadow-lg hover-lift hover:scale-[1.02] transition-transform">
+                                            <FileText className="w-4 h-4 mr-2" />
+                                            กรอกคำขอกู้ยืมเงิน
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    ) : (
+                        <Card className={`border-l-4 ${loanRequest.status === 'APPROVED' ? 'border-l-success bg-success/5' :
+                                loanRequest.status === 'REJECTED' ? 'border-l-destructive bg-destructive/5' :
+                                    'border-l-warning bg-warning/5'
+                            }`}>
+                            <CardHeader className="pb-3">
+                                <CardTitle className="flex items-center gap-2 text-lg">
+                                    <ClipboardList className="w-5 h-5" />
+                                    สถานะการขอกู้ยืมเงินเบื้องต้น (ผู้กู้รายใหม่)
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="font-medium">สถานะ:</span>
+                                            {loanRequest.status === 'PENDING' && <span className="text-warning font-semibold">รอการอนุมัติ</span>}
+                                            {loanRequest.status === 'APPROVED' && <span className="text-success font-semibold px-2 py-0.5 bg-success/10 rounded-full text-sm">อนุมัติแล้ว</span>}
+                                            {loanRequest.status === 'REJECTED' && <span className="text-destructive font-semibold px-2 py-0.5 bg-destructive/10 rounded-full text-sm">ไม่อนุมัติ</span>}
+                                        </div>
+                                        {loanRequest.status === 'PENDING' && (
+                                            <p className="text-sm text-muted-foreground">เจ้าหน้าที่กำลังพิจารณาข้อมูลและผลการเรียนของคุณ</p>
+                                        )}
+                                        {loanRequest.status === 'APPROVED' && (
+                                            <p className="text-sm text-muted-foreground">คุณสามารถดำเนินการส่งเอกสารยืนยันและสัญญาในขั้นตอนต่อไปได้</p>
+                                        )}
+                                        {loanRequest.status === 'REJECTED' && loanRequest.adminRemark && (
+                                            <p className="text-sm text-destructive mt-1 bg-destructive/10 p-2 rounded max-w-lg">
+                                                <strong>หมายเหตุ:</strong> {loanRequest.adminRemark}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                        ส่งเมื่อ: {format(new Date(loanRequest.createdAt), 'd MMMM yyyy HH:mm', { locale: th })} น.
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
             )}
 
@@ -212,4 +280,62 @@ function DocumentStatusCard({ documents, type, disabled }: { documents: any[], t
         </div>
     );
 }
+
+function DashboardStepper({ currentStep }: { currentStep: number }) {
+    const steps = [
+        { id: 1, icon: ClipboardList, title: "ยื่นคำขอกู้ยืม" },
+        { id: 2, icon: Download, title: "แอป กยศ.Connect" },
+        { id: 3, icon: FileSignature, title: "ลงนามสัญญายืนยัน" },
+        { id: 4, icon: FileCheckIcon, title: "อัปโหลด PDF เข้าระบบ" },
+        { id: 5, icon: CheckCircle2, title: "นำส่งเอกสารตัวจริง" },
+        { id: 6, icon: AlertCircle, title: "แก้ไขเอกสารตีกลับ" },
+    ];
+
+    return (
+        <div className="bg-white/50 backdrop-blur-md rounded-xl border p-4 shadow-sm mb-6 mt-4 overflow-hidden dark:bg-black/20">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-1.5"><Clock className="w-4 h-4 text-primary" /> สถานะการดำเนินการของคุณ</h3>
+            <div className="relative">
+                {/* Progress bar line (Background) */}
+                <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 h-1 bg-border rounded-full" />
+                {/* Progress bar line (Active) */}
+                <div
+                    className="absolute top-1/2 -translate-y-1/2 left-0 h-1 bg-primary rounded-full transition-all duration-700"
+                    style={{ width: `${(Math.min(currentStep, 5) / 5) * 100}%` }}
+                />
+
+                <div className="relative flex justify-between">
+                    {steps.map((step) => {
+                        const Icon = step.icon;
+                        const isActive = step.id === currentStep;
+                        const isPast = step.id < currentStep && step.id !== 6;
+                        const isRejectStep = step.id === 6;
+
+                        // ถ้าระบบไม่ได้อยู่สถานะแก้ไข(6) ให้เทา step 6 ไว้
+                        if (isRejectStep && currentStep !== 6) return null;
+
+                        return (
+                            <div key={step.id} className={`flex flex-col items-center gap-2 ${isRejectStep ? 'absolute right-0 top-0 bottom-0 bg-white/90 dark:bg-background px-2' : 'relative z-10'} w-16 sm:w-20`}>
+                                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border-2 transition-colors ${isActive && !isRejectStep ? 'bg-primary border-primary text-white shadow-md ring-4 ring-primary/20' :
+                                    isPast ? 'bg-primary border-primary text-white' :
+                                        isActive && isRejectStep ? 'bg-destructive border-destructive text-white shadow-md ring-4 ring-destructive/20' :
+                                            'bg-background border-border text-muted-foreground'
+                                    }`}>
+                                    <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                                </div>
+                                <p className={`text-[9px] sm:text-xs text-center font-medium leading-tight ${isActive && !isRejectStep ? 'text-primary font-bold' :
+                                    isActive && isRejectStep ? 'text-destructive font-bold' :
+                                        isPast ? 'text-foreground' :
+                                            'text-muted-foreground'
+                                    }`}>
+                                    {step.title}
+                                </p>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 

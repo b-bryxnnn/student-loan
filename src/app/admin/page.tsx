@@ -39,6 +39,9 @@ export default async function AdminDashboardPage() {
                     <Link href="/admin/documents">
                         <Button className="hover-lift" size="sm">จัดการเอกสารทั้งหมด</Button>
                     </Link>
+                    <Link href="/admin/settings">
+                        <Button variant="secondary" className="hover-lift" size="sm">ตั้งค่าระบบ</Button>
+                    </Link>
                 </div>
             </div>
 

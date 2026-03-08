@@ -26,11 +26,12 @@ export async function POST(req: Request) {
         const formData = await req.formData();
         const purpose = formData.get("purpose") as string;
         const gpa = parseFloat(formData.get("gpa") as string);
+        const familyIncome = parseFloat(formData.get("familyIncome") as string);
         const educationHistory = formData.get("educationHistory") as string;
         const scholarships = formData.get("scholarships") as string;
         const file = formData.get("transcriptFile") as File;
 
-        if (!purpose || isNaN(gpa) || !educationHistory || !file) {
+        if (!purpose || isNaN(gpa) || isNaN(familyIncome) || !educationHistory || !file) {
             return NextResponse.json({ error: "กรุณากรอกข้อมูลให้ครบถ้วน" }, { status: 400 });
         }
 
@@ -65,6 +66,7 @@ export async function POST(req: Request) {
                 userId: user.id,
                 purpose,
                 gpa,
+                familyIncome,
                 educationHistory,
                 scholarships,
                 transcriptUrl,

@@ -35,6 +35,34 @@ function DocumentForm() {
         pdpaConsent: false,
     });
 
+    const [settings, setSettings] = useState<any>(null);
+    const [settingsLoading, setSettingsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                // We'll create a public endpoint for settings soon, or use a general info endpoint
+                const res = await fetch('/api/settings/public');
+                if (res.ok) {
+                    const data = await res.json();
+                    setSettings(data);
+
+                    // Auto-fill academic year and semester from settings
+                    setFormData(prev => ({
+                        ...prev,
+                        academicYear: data.academicYear || "2567",
+                        semester: data.semester || "1"
+                    }));
+                }
+            } catch (error) {
+                console.error("Failed to load settings:", error);
+            } finally {
+                setSettingsLoading(false);
+            }
+        };
+        fetchSettings();
+    }, []);
+
     const isConfirmation = formData.type === 'CONFIRMATION';
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -128,6 +156,16 @@ function DocumentForm() {
                     </p>
                 </div>
             </div>
+
+            {settings && !settings.documentSubmissionOpen && (
+                <Alert className="border-destructive bg-destructive/10">
+                    <ShieldAlert className="w-5 h-5 text-destructive" />
+                    <AlertTitle className="text-destructive font-semibold">ระบบปิดรับเอกสารชั่วคราว</AlertTitle>
+                    <AlertDescription className="mt-2 text-destructive">
+                        ขณะนี้ระบบยังไม่เปิดรับเอกสารสำหรับเทอม {settings.semester}/{settings.academicYear} กรุณารอประกาศจากเจ้าหน้าที่
+                    </AlertDescription>
+                </Alert>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
@@ -275,8 +313,14 @@ function DocumentForm() {
 
                             </CardContent>
                             <CardFooter className="pt-2 pb-6 px-6">
-                                <Button type="submit" size="lg" className="w-full text-base" disabled={loading}>
-                                    {loading ? "กำลังตรวจสอบและอัปโหลด..." : "ส่งเอกสารเข้าระบบ"}
+                                <Button
+                                    type="submit"
+                                    size="lg"
+                                    className="w-full text-base"
+                                    disabled={loading || (settings && !settings.documentSubmissionOpen)}
+                                >
+                                    {loading ? "กำลังตรวจสอบและอัปโหลด..." :
+                                        (settings && !settings.documentSubmissionOpen) ? "ระบบปิดรับเอกสาร" : "ส่งเอกสารเข้าระบบ"}
                                 </Button>
                             </CardFooter>
                         </form>

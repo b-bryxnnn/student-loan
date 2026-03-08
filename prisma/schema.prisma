@@ -43,17 +43,20 @@ model User {
 }
 
 model LoanRequest {
-  id              String   @id @default(cuid())
+  id              String             @id @default(cuid())
   userId          String
-  purpose         String   // จุดประสงค์ขอกู้ยืมเบื้องต้น
-  gpa             Float    // เกรดเฉลี่ย
-  educationHistory String? // ประวัติการศึกษาที่ผ่านมา (ป.6 จากไหน, ม.3 จากไหน)
-  scholarships    String?  // ทุนที่เคยได้รับ
-  transcriptUrl   String?  // ไฟล์ ปพ.1 (เก็บเป็น URL หรือ ID จาก Drive)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  purpose         String             // จุดประสงค์ขอกู้ยืมเบื้องต้น
+  gpa             Float              // เกรดเฉลี่ย
+  familyIncome    Float?             // รายได้ครอบครัวต่อปี
+  educationHistory String?           // ประวัติการศึกษาที่ผ่านมา (ป.6 จากไหน, ม.3 จากไหน)
+  scholarships    String?            // ทุนที่เคยได้รับ
+  transcriptUrl   String?            // ไฟล์ ปพ.1 (เก็บเป็น URL หรือ ID จาก Drive)
+  status          LoanRequestStatus  @default(PENDING) // สถานะคำขอกู้ยืม
+  adminRemark     String?            // หมายเหตุจากเจ้าหน้าที่ (ถ้าไม่อนุมัติ)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
 
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Document {
@@ -79,11 +82,14 @@ model Document {
 }
 
 model SystemSetting {
-  id              String   @id @default(cuid())
-  academicYear    String   @default("2567")
-  semester        String   @default("1")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                      String    @id @default(cuid())
+  academicYear            String    @default("2567")
+  semester                String    @default("1")
+  documentSubmissionOpen  Boolean   @default(false)
+  submissionOpenDate      DateTime?
+  submissionCloseDate     DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 }
 
 model Announcement {
@@ -158,4 +164,10 @@ enum DocumentStatus {
   PENDING      // รอตรวจ
   REJECTED     // ต้องแก้ไข
   APPROVED     // ตรวจผ่าน (กำลังนำส่ง)
+}
+
+enum LoanRequestStatus {
+  PENDING      // รออนุมัติ
+  APPROVED     // อนุมัติเบื้องต้นแล้ว
+  REJECTED     // ไม่อนุมัติ
 }

@@ -30,6 +30,22 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "ขนาดไฟล์เกิน 10MB" }, { status: 400 });
         }
 
+        // Check if system is open for submission
+        const setting = await db.systemSetting.findFirst();
+        if (setting) {
+            let isOpen = setting.documentSubmissionOpen;
+            const now = new Date();
+
+            if (isOpen) {
+                if (setting.submissionOpenDate && now < setting.submissionOpenDate) isOpen = false;
+                if (setting.submissionCloseDate && now > setting.submissionCloseDate) isOpen = false;
+            }
+
+            if (!isOpen) {
+                return NextResponse.json({ error: "ระบบปิดรับเอกสารชั่วคราว" }, { status: 403 });
+            }
+        }
+
         const fileName = file.name.toUpperCase();
 
         // 1. Validate File Name

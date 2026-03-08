@@ -42,7 +42,7 @@ export default function LoanRequestPage() {
     const [file, setFile] = useState<File | null>(null);
     const [profile, setProfile] = useState<UserProfile | null>(null);
 
-    const [formData, setFormData] = useState({ purpose: "", gpa: "" });
+    const [formData, setFormData] = useState({ purpose: "", gpa: "", familyIncome: "" });
 
     // Table: ประวัติการศึกษา
     const [eduRows, setEduRows] = useState<EduRow[]>([
@@ -130,7 +130,8 @@ export default function LoanRequestPage() {
         const data = new FormData();
         data.append("purpose", formData.purpose);
         data.append("gpa", formData.gpa);
-        data.append("educationHistory", educationHistory);
+        data.append("familyIncome", formData.familyIncome);
+        data.append("educationHistory", JSON.stringify(eduRows));
         data.append("scholarships", scholarships);
         data.append("transcriptFile", file);
 
@@ -221,14 +222,27 @@ export default function LoanRequestPage() {
                             />
                         </div>
 
-                        {/* GPA */}
-                        <div className="max-w-xs">
-                            <Label htmlFor="gpa">เกรดเฉลี่ยสะสม (GPAX) ล่าสุด <span className="text-destructive">*</span></Label>
-                            <Input
-                                id="gpa" name="gpa" type="number" step="0.01" max="4.00" min="0.00"
-                                value={formData.gpa} onChange={handleChange} required
-                                placeholder="เช่น 3.50" className="bg-background/50 mt-1"
-                            />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {/* GPA */}
+                            <div>
+                                <Label htmlFor="gpa">เกรดเฉลี่ยสะสม (GPAX) ล่าสุด <span className="text-destructive">*</span></Label>
+                                <Input
+                                    id="gpa" name="gpa" type="number" step="0.01" max="4.00" min="0.00"
+                                    value={formData.gpa} onChange={handleChange} required
+                                    placeholder="เช่น 3.50" className="bg-background/50 mt-1"
+                                />
+                            </div>
+
+                            {/* รายได้ครอบครัว */}
+                            <div>
+                                <Label htmlFor="familyIncome">รายได้ครอบครัว (บาท/ปี) <span className="text-destructive">*</span></Label>
+                                <Input
+                                    id="familyIncome" name="familyIncome" type="number" step="1" min="0"
+                                    value={formData.familyIncome} onChange={handleChange} required
+                                    placeholder="เช่น 150000" className="bg-background/50 mt-1"
+                                />
+                                <p className="text-[10px] text-muted-foreground mt-1">ต้องไม่เกิน 360,000 บาท/ปี สำหรับลักษณะที่ 1</p>
+                            </div>
                         </div>
 
                         {/* ประวัติการศึกษา — ตาราง */}
